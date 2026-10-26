@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.venv/
+artifacts/
+*.FCStd1
+*.bak
+.DS_Store
