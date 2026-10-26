@@ -1,0 +1,29 @@
+name: Reference model tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reference-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Run reference acceptance tests
+        run: python -m unittest discover -s tests -v
+      - name: Run scenario entry points
+        run: |
+          python -m simulation.run_demo --scenario accept
+          python -m simulation.run_demo --scenario reject
+          python -m simulation.run_demo --scenario feed-jam
+          python -m simulation.run_demo --scenario interlock

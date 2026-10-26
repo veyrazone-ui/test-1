@@ -1,0 +1,15 @@
+symbol,direction,type,active_meaning,initial_simulation_value,notes
+start,input,BOOL,Operator requests one cycle,0,Rising edge only; must be released for reset
+reset,input,BOOL,Operator requests recovery to READY,0,Rising edge only; never starts motion
+stop,input,BOOL,Operator requests operational stop,0,Level active; not a safety function
+permissive_ok,input,BOOL,Simulated external permissive is healthy,1,False latches fault; not a safety circuit
+station,input,BOOL,Part is at classification and reject station,0,Sample metal on first FEED station detection
+metal,input,BOOL,Classification sensor detects metal,0,Valid only at station; true selects reject route
+accepted,input,BOOL,Part interrupts accept exit sensor,0,Must be seen true then false before count
+rejected,input,BOOL,Part interrupts reject chute sensor,0,Must be seen true then false before count
+pusher_home,input,BOOL,Pusher is fully retracted,1,Required to start and while belt moves
+pusher_extended,input,BOOL,Pusher is fully extended,0,True together with home is a fault
+conveyor,output,BOOL,Request belt motion,0,Only FEED and ACCEPT
+extend,output,BOOL,Request pusher extension,0,Only EXTEND; proposed spring-return mechanism
+alarm,output,BOOL,Latched FAULT is present,0,Diagnostic indication only
+ready,output,BOOL,READY state and path clear and pusher home,0,Indicates readiness; a new Start edge is still required

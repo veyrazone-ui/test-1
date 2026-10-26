@@ -1,0 +1,35 @@
+Python 3.12.14
+Command: python -m unittest discover -s tests -v
+
+test_accept_demo_counts_one (test_controller.ControllerTests.test_accept_demo_counts_one) ... ok
+test_all_active_states_have_timeouts (test_controller.ControllerTests.test_all_active_states_have_timeouts) ... ok
+test_all_demo_traces_obey_output_interlock (test_controller.ControllerTests.test_all_demo_traces_obey_output_interlock) ... ok
+test_bad_permissive_blocks_reset (test_controller.ControllerTests.test_bad_permissive_blocks_reset) ... ok
+test_boot_and_start_without_reset_do_not_move (test_controller.ControllerTests.test_boot_and_start_without_reset_do_not_move) ... ok
+test_classification_is_latched_at_station (test_controller.ControllerTests.test_classification_is_latched_at_station) ... ok
+test_conflicting_limits_or_exits_fault (test_controller.ControllerTests.test_conflicting_limits_or_exits_fault) ... ok
+test_fault_reset_requires_clear_cell_and_new_edge (test_controller.ControllerTests.test_fault_reset_requires_clear_cell_and_new_edge) ... ok
+test_first_fault_survives_stop_and_secondary_fault (test_controller.ControllerTests.test_first_fault_survives_stop_and_secondary_fault) ... ok
+test_held_start_does_not_repeat_cycle (test_controller.ControllerTests.test_held_start_does_not_repeat_cycle) ... ok
+test_home_feedback_loss_stops_conveyor (test_controller.ControllerTests.test_home_feedback_loss_stops_conveyor) ... ok
+test_interlock_in_each_active_state_latches (test_controller.ControllerTests.test_interlock_in_each_active_state_latches) ... ok
+test_reject_demo_counts_one (test_controller.ControllerTests.test_reject_demo_counts_one) ... ok
+test_reject_needs_exit_passage_and_home_feedback (test_controller.ControllerTests.test_reject_needs_exit_passage_and_home_feedback) ... ok
+test_repeated_cycles_count_exactly_once_each (test_controller.ControllerTests.test_repeated_cycles_count_exactly_once_each) ... ok
+test_reset_alone_never_starts_motion (test_controller.ControllerTests.test_reset_alone_never_starts_motion) ... ok
+test_reset_preserves_completed_counts (test_controller.ControllerTests.test_reset_preserves_completed_counts) ... ok
+test_sensor_high_does_not_count_until_passage_finishes (test_controller.ControllerTests.test_sensor_high_does_not_count_until_passage_finishes) ... ok
+test_simultaneous_start_and_reset_cannot_restart (test_controller.ControllerTests.test_simultaneous_start_and_reset_cannot_restart) ... ok
+test_start_with_occupied_cell_faults (test_controller.ControllerTests.test_start_with_occupied_cell_faults) ... ok
+test_station_must_clear_before_count (test_controller.ControllerTests.test_station_must_clear_before_count) ... ok
+test_station_on_timeout_boundary_is_too_late (test_controller.ControllerTests.test_station_on_timeout_boundary_is_too_late) ... ok
+test_station_one_scan_before_timeout_is_accepted (test_controller.ControllerTests.test_station_one_scan_before_timeout_is_accepted) ... ok
+test_stop_in_each_active_state_requires_reset (test_controller.ControllerTests.test_stop_in_each_active_state_requires_reset) ... ok
+test_stop_overrides_start (test_controller.ControllerTests.test_stop_overrides_start) ... ok
+test_timer_configuration_rejects_invalid_values (test_controller.ControllerTests.test_timer_configuration_rejects_invalid_values) ... ok
+test_wrong_exit_faults_without_counting (test_controller.ControllerTests.test_wrong_exit_faults_without_counting) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 0.011s
+
+OK
