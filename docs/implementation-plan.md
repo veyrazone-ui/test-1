@@ -13,6 +13,12 @@ The repository contains a working reference scaffold. The learning work below re
 | 7 — Optional CNC extension | 4 h | Create a CAM setup for the mounting plate. Document stock, origin, workholding and operations; simulate. If time is short, add a PLC sensor-debounce investigation instead. | Relate a functional component to manufacturability, or study signal conditioning. | Toolpath simulation reviewed for clearance and residual material, with screenshots; no claim of machining. Alternative: tested debounce change and timing impact note. |
 | 8 — Portfolio release | 4 h | Record a 60–90 s walkthrough; write a short engineering reflection; complete the evidence table and check README status against actual work. | Explain decisions, verification and limitations to an engineering reviewer. | Links to code, PLC exports, actual results, CAD and demo work from a fresh checkout. Tag a release only when the MVP gates are met. |
 
+## Stage 2 delivery status — 2 November 2026
+
+The [Stage 2 source package](../plc/README.md) now contains the accept-only Structured Text controller, symbolic I/O and state types, a simulation stimulus driver, expected outcomes and a result register. The source implements startup/Reset/Start-edge handling, FEED/ACCEPT timers and passage-confirmed counting, with the guard faults needed by this route. Metal selection stops with an explicit unsupported-route fault; EXTEND/RETRACT remain Stage 3.
+
+The Stage 2 gate is **open**: no CODESYS native project/archive, successful compiler log or actual IDE-simulation results have been produced. Follow [the simulation procedure](../plc/stage2-simulation.md), retain observations in [the evidence register](../evidence/stage2/README.md), and close the gate only after verification. Existing Python tests are reference evidence only.
+
 ## Branch-sized tasks
 
 Suggested branch names are examples; they have not been created or assigned:

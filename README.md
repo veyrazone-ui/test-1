@@ -2,9 +2,11 @@
 
 A student-scale automation project: transport one part, classify it with a simulated inductive sensor, send non-metal parts to the accept exit and divert metal parts to a reject chute. Demonstrate sequencing, feedback, fault handling and verification before connecting any hardware.
 
-**Status: tested Python reference starter; PLC, HMI and CAD implementation planned.** The included demos use scripted sensor inputs. They are not a physics simulation, a connected PLC, or evidence of a commissioned machine.
+**Status: tested Python reference; Stage 2 PLC Structured Text source and IDE-simulation procedure implemented, but not compiled or run in CODESYS. HMI and CAD remain planned.** The included demos use scripted sensor inputs. They are not a physics simulation, a connected PLC, or evidence of a commissioned machine.
 
 ## Start here
+
+For the PLC milestone, open the [Stage 2 package](plc/README.md). The existing Python commands below exercise the reference model, not the ST source.
 
 ```bash
 git clone https://github.com/veyrazone-ui/test-1.git
@@ -67,7 +69,9 @@ Startup is STOPPED. Reset can establish READY only with a clear cell and the pus
 | Four deterministic demos and CSV trace export | Implemented |
 | Automated reference tests | 27 tests passed locally; includes parameterized state cases |
 | Continuous-integration workflow | Included; check the repository Actions tab for hosted run status |
-| CODESYS PLC project and PLC test results | Planned; not compiled or tested yet |
+| Stage 2 PLC source (startup, Reset, Start, FEED, ACCEPT) | Implemented as readable ST; [mapping and simulation procedure](plc/README.md) included |
+| CODESYS native project, compilation and IDE results | Not produced/run; [Stage 2 evidence status](evidence/stage2/README.md); gate remains open |
+| PLC reject route and full fault verification | Stage 3/4 work remains planned |
 | HMI and CAD models | Planned; briefs included |
 | CAM toolpaths / physical prototype | Optional future work; not produced or tested |
 
@@ -96,7 +100,7 @@ CODESYS Development System is available as a free download; runtime products and
 | `docs/tools-and-sources.md` | Setup guidance and official references |
 | `simulation/` | `controller.py`, `scenarios.py`, `run_demo.py` |
 | `tests/` | `test_controller.py` and test discovery support |
-| `plc/README.md` | PLC project structure and porting steps |
+| `plc/` | Stage 2 ST listings, symbolic/state mapping and CODESYS build/test procedure |
 | `hmi/README.md` | Operator screen and simulation-panel brief |
 | `cad/README.md` | Layout, mounting-plate brief and design checks |
 | `cam/README.md` | Optional manufacturing study and verification gate |
@@ -110,7 +114,7 @@ Suggested pace: **eight weeks at roughly 4–6 hours per week**, adjustable arou
 | Stage | Main deliverable | Completion gate |
 | --- | --- | --- |
 | 1 | Understand the reference model and requirements | Explain both routes; change a timer and predict the test result |
-| 2 | PLC feed/accept sequence | Compile; show clear startup, Start edge and confirmed accept count |
+| 2 | PLC feed/accept source supplied; IDE verification pending | Compile; show clear startup, Start edge, timer behavior and confirmed accept count |
 | 3 | PLC reject path and fault recovery | Demonstrate missing feedback, timeout and deliberate restart |
 | 4 | PLC verification | Replay the test matrix; retain actual results and traces |
 | 5 | Operator display | Show state, sensor status, counters and useful fault/recovery text |

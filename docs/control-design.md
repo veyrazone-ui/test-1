@@ -1,5 +1,7 @@
 # Control design
 
+The full contract below describes the reference/intended MVP. The accept-only PLC subset and its explicit differences (Reset inhibition in READY, unsupported metal route, TON wall-time timing) are in [Stage 2 mapping](../plc/stage2-mapping.md).
+
 ## State and output contract
 
 Outputs are derived from the resulting state at the end of each scan. Count changes occur only on successful cycle completion.

@@ -52,3 +52,7 @@ Additional PLC completion target: 20 alternating accept/reject cycles with count
 CAD: inspect belt/part/pusher envelopes, sensor adjustment and mounting access; check dimensions and units in the exported drawing; reopen the STEP export to inspect geometry. Compare the nominal travel calculations with chosen sensor positions.
 
 CAM: inspect stock, origin, clamps, tool reach and clearance; simulate the operation sequence; inspect remaining material and toolpath warnings. A simulated toolpath is not machine clearance approval. Record a real machine/postprocessor only if one has actually been selected and checked.
+
+## Stage 2 PLC subset
+
+Use [the dedicated Stage 2 procedure](../plc/stage2-simulation.md) and [result register](../evidence/stage2/stage2-results.csv) for startup, Reset, Start edges, FEED/ACCEPT, timers and one confirmed non-metal count. All Stage 2 CODESYS outcomes are currently NOT RUN. The full test matrix in this document remains a later gate; source delivery does not establish R01–R12 PLC compliance.
