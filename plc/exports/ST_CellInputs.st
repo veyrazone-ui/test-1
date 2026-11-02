@@ -3,7 +3,7 @@ STRUCT
     start : BOOL := FALSE;
     reset : BOOL := FALSE;
     stop : BOOL := FALSE;
-    permissive_ok : BOOL := TRUE;
+    permissive_ok : BOOL := TRUE; (* Simulation default, not a safety input. *)
     station : BOOL := FALSE;
     metal : BOOL := FALSE;
     accepted : BOOL := FALSE;

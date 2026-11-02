@@ -21,6 +21,8 @@ jobs:
           python-version: '3.12'
       - name: Run reference acceptance tests
         run: python -m unittest discover -s tests -v
+      - name: Check PLC package consistency (not compilation)
+        run: python plc/check_package.py
       - name: Run scenario entry points
         run: |
           python -m simulation.run_demo --scenario accept

@@ -28,6 +28,6 @@ A GitHub Actions workflow is supplied separately. Its hosted status must be read
 
 Use [the results template](results-template.md) for later implementation evidence. Add real observations and link their source files before updating project status.
 
-## Stage 2 source package
+## Stage 2 package — 2 November 2026
 
-The accept-route ST source and CODESYS procedure were added on 2 November 2026. See [Stage 2 status and result register](stage2/README.md). The Python baseline above is unchanged and does not establish PLC compilation or execution. No Stage 2 CODESYS pass or hardware commissioning is claimed.
+The [PLC source package](../plc/README.md) is now supplied. The [Stage 2 evidence register](stage2/README.md) separates local Python/package checks from unrun CODESYS compilation and simulation. The original 27 Python tests do not exercise the ST code. Stage 2 remains OPEN; no native project, PLC runtime result or hardware commissioning is claimed.

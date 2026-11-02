@@ -1,114 +1,142 @@
 PROGRAM PRG_TestSequence
 VAR
-    // SIMULATION ONLY. Configure these initializers OFFLINE, then reset origin.
-    // 0 normal + held Start; 1 feed timeout; 2 accept held high;
-    // 3 accept never high; 4 station held high; 5 unsupported metal;
-    // 6 FEED boundary; 7 ACCEPT boundary.
-    uiScenario : UINT := 0;
-    uiArrivalScan : UINT := 250; // case 6: 249/250; case 7: 149/150.
-    xRun : BOOL := FALSE;       // Write TRUE only after origin reset and trace setup.
-    xDone : BOOL := FALSE;
-    xFailed : BOOL := FALSE;    // Latched invariant failure, not a full test verdict.
-    udiScan : UDINT := 0;
-    udiFinishScan : UDINT;
-    idleInputs : ST_CellInputs;
-    simInputs : ST_CellInputs;
-    sorter : FB_ConveyorSorter;
-    samples : ARRAY[0..511] OF ST_Stage2Sample;
+    (* Set testCase while stopped after an IDE Reset Cold; then Run.
+       0 normal + held Start + Stop/Reset; 1 FEED deadline;
+       2 ACCEPT deadline; 3 FEED one scan early; 4 ACCEPT one scan early. *)
+    testCase : UINT := 0;
+    scan : UINT := 0;
+    done : BOOL := FALSE;
+    passed : BOOL := FALSE;
+    failed : BOOL := FALSE;
+    inputs : ST_CellInputs;
+    dut : FB_ConveyorSorter;
+    samples : ARRAY[0..300] OF ST_Stage2Sample;
 END_VAR
 
-// IMPLEMENTATION
-simInputs := idleInputs;
-udiFinishScan := 400;
-IF xRun THEN
-    // Start before Reset is consumed in STOPPED; then deliberate Reset/Start.
-    simInputs.start := (udiScan = 1) OR (udiScan >= 4);
-    simInputs.reset := udiScan = 2;
-    CASE uiScenario OF
+(* IMPLEMENTATION: paste below this line into the ST implementation pane. *)
+(* Simulation-only alternative task entry. Never schedule alongside PLC_PRG.
+   Boundary cases use nominal scan counts; inspect actual ET/Q for jitter. *)
+IF NOT done THEN
+    inputs.start := scan >= 2; (* Held across completion until case 0 Stop. *)
+    inputs.reset := scan = 1;
+    inputs.stop := FALSE;
+    inputs.permissive_ok := TRUE;
+    inputs.station := FALSE;
+    inputs.metal := FALSE;
+    inputs.accepted := FALSE;
+    inputs.rejected := FALSE;
+    inputs.pusher_home := TRUE;
+    inputs.pusher_extended := FALSE;
+    CASE testCase OF
         0:
-            simInputs.station := (udiScan >= 10) AND (udiScan <= 17);
-            simInputs.accepted := ((udiScan >= 11) AND (udiScan <= 15))
-                                  OR (udiScan = 20) OR (udiScan = 21);
-            udiFinishScan := 40;
+            inputs.station := (scan >= 3) AND (scan <= 5);
+            inputs.accepted := (scan = 4) OR (scan = 5);
+            IF scan >= 9 THEN inputs.start := FALSE; END_IF;
+            inputs.stop := scan = 9;
+            inputs.reset := (scan = 1) OR (scan = 10);
         1:
-            // No station detection: wait for FEED timeout.
-            simInputs.station := FALSE;
+            inputs.station := scan >= 252;
         2:
-            simInputs.station := udiScan = 10;
-            simInputs.accepted := udiScan >= 11;
+            inputs.station := scan = 3;
+            inputs.accepted := (scan >= 4) AND (scan < 153);
         3:
-            simInputs.station := udiScan = 10;
+            inputs.station := scan = 251;
+            inputs.accepted := scan = 252;
         4:
-            simInputs.station := udiScan >= 10;
-            simInputs.accepted := (udiScan >= 11) AND (udiScan <= 15);
-        5:
-            simInputs.station := udiScan = 10;
-            simInputs.metal := udiScan = 10;
-            udiFinishScan := 30;
-        6:
-            simInputs.station := udiScan = (4 + uiArrivalScan);
-            udiFinishScan := 4 + uiArrivalScan + 2;
-        7:
-            simInputs.station := udiScan = 10;
-            simInputs.accepted := (udiScan >= 11) AND (udiScan < (10 + uiArrivalScan));
-            udiFinishScan := 10 + uiArrivalScan + 2;
-        ELSE
-            xFailed := TRUE;
-            simInputs.stop := TRUE;
-            udiFinishScan := 0;
+            inputs.station := scan = 3;
+            inputs.accepted := (scan >= 4) AND (scan < 152);
+    ELSE
+        failed := TRUE;
+        done := TRUE;
     END_CASE;
-END_IF;
-IF xDone THEN
-    simInputs.stop := TRUE; // Freeze evidence, then stop on the following scan.
-END_IF;
 
-// This program owns its own controller. Do NOT also schedule PLC_PRG.
-sorter(i := simInputs);
+    IF NOT done THEN
+        dut(i := inputs);
+        samples[scan].scan := scan;
+        samples[scan].inputs := inputs;
+        samples[scan].state := dut.state;
+        samples[scan].fault := dut.fault;
+        samples[scan].outputs := dut.o;
+        samples[scan].accepted_count := dut.accepted_count;
+        samples[scan].accepted_seen := dut.accepted_seen;
+        samples[scan].feed_et := dut.feed_et;
+        samples[scan].accept_et := dut.accept_et;
+        samples[scan].feed_q := dut.feed_q;
+        samples[scan].accept_q := dut.accept_q;
 
-IF xRun AND NOT xDone THEN
-    // Invariants evaluated on the actual controller instance, never a Python port.
-    IF sorter.o.extend OR (sorter.udiAcceptedCount > 1) THEN
-        xFailed := TRUE;
-    END_IF;
-    IF sorter.o.conveyor <> ((sorter.eState = E_CellState.FEED)
-                             OR (sorter.eState = E_CellState.ACCEPT)) THEN
-        xFailed := TRUE;
-    END_IF;
-    IF (udiScan <= 3) AND sorter.o.conveyor THEN
-        xFailed := TRUE;
-    END_IF;
-    IF uiScenario = 0 THEN
-        IF (udiScan < 18) AND (sorter.udiAcceptedCount <> 0) THEN
-            xFailed := TRUE;
+        failed := failed OR dut.o.extend OR (dut.accepted_count > 1);
+        IF scan = 0 THEN
+            failed := failed OR (dut.state <> E_CellState.STOPPED)
+                      OR dut.o.conveyor OR (dut.accepted_count <> 0);
+        ELSIF scan = 1 THEN
+            failed := failed OR (dut.state <> E_CellState.READY) OR dut.o.conveyor;
+        ELSIF scan = 2 THEN
+            failed := failed OR (dut.state <> E_CellState.FEED)
+                      OR NOT dut.o.conveyor OR (dut.feed_et <> T#0ms);
         END_IF;
-        IF (udiScan >= 18) AND ((sorter.udiAcceptedCount <> 1)
-                               OR (sorter.eState <> E_CellState.READY)) THEN
-            xFailed := TRUE;
+
+        CASE testCase OF
+            0:
+                IF (scan >= 3) AND (scan <= 5) THEN
+                    failed := failed OR (dut.state <> E_CellState.ACCEPT)
+                              OR (dut.accepted_count <> 0);
+                ELSIF (scan >= 6) AND (scan <= 8) THEN
+                    failed := failed OR (dut.state <> E_CellState.READY)
+                              OR (dut.accepted_count <> 1) OR dut.o.conveyor;
+                ELSIF scan = 9 THEN
+                    failed := failed OR (dut.state <> E_CellState.STOPPED)
+                              OR dut.o.conveyor OR (dut.accepted_count <> 1);
+                ELSIF scan >= 10 THEN
+                    failed := failed OR (dut.state <> E_CellState.READY)
+                              OR dut.o.conveyor OR (dut.accepted_count <> 1);
+                END_IF;
+                done := scan = 12;
+            1:
+                IF (scan >= 2) AND (scan < 252) THEN
+                    failed := failed OR (dut.state <> E_CellState.FEED);
+                ELSIF scan = 252 THEN
+                    failed := failed OR (dut.state <> E_CellState.FAULT)
+                              OR (dut.fault <> E_CellFault.FEED_TIMEOUT)
+                              OR NOT dut.feed_q OR dut.o.conveyor
+                              OR (dut.accepted_count <> 0);
+                    done := TRUE;
+                END_IF;
+            2:
+                IF (scan >= 3) AND (scan < 153) THEN
+                    failed := failed OR (dut.state <> E_CellState.ACCEPT)
+                              OR (dut.accepted_count <> 0);
+                ELSIF scan = 153 THEN
+                    failed := failed OR (dut.state <> E_CellState.FAULT)
+                              OR (dut.fault <> E_CellFault.ACCEPT_TIMEOUT)
+                              OR NOT dut.accept_q OR dut.o.conveyor
+                              OR (dut.accepted_count <> 0);
+                    done := TRUE;
+                END_IF;
+            3:
+                IF scan = 251 THEN
+                    failed := failed OR (dut.state <> E_CellState.ACCEPT)
+                              OR dut.feed_q;
+                ELSIF scan = 253 THEN
+                    failed := failed OR (dut.state <> E_CellState.READY)
+                              OR (dut.accepted_count <> 1) OR dut.o.conveyor;
+                    done := TRUE;
+                END_IF;
+            4:
+                IF scan = 152 THEN
+                    failed := failed OR (dut.state <> E_CellState.READY)
+                              OR dut.accept_q OR (dut.accepted_count <> 1)
+                              OR dut.o.conveyor;
+                    done := TRUE;
+                END_IF;
+        END_CASE;
+        IF scan = 300 THEN
+            failed := TRUE;
+            done := TRUE;
         END_IF;
-    END_IF;
-    IF udiScan <= 511 THEN
-        samples[udiScan].scan := udiScan;
-        samples[udiScan].inputs := simInputs;
-        samples[udiScan].outputs := sorter.o;
-        samples[udiScan].state := sorter.eState;
-        samples[udiScan].fault := sorter.eFault;
-        samples[udiScan].count := sorter.udiAcceptedCount;
-        samples[udiScan].acceptedSeen := sorter.xAcceptedSeen;
-        samples[udiScan].startEdge := sorter.xStartEdge;
-        samples[udiScan].resetEdge := sorter.xResetEdge;
-        samples[udiScan].feedDeadline := sorter.xFeedDeadline;
-        samples[udiScan].acceptDeadline := sorter.xAcceptDeadline;
-        samples[udiScan].feedDecisionET := sorter.tFeedDecisionElapsed;
-        samples[udiScan].acceptDecisionET := sorter.tAcceptDecisionElapsed;
-        samples[udiScan].feedET := sorter.tFeedElapsed;
-        samples[udiScan].acceptET := sorter.tAcceptElapsed;
-    ELSE
-        xFailed := TRUE;
-    END_IF;
-    IF udiScan >= udiFinishScan THEN
-        xDone := TRUE;
-    ELSE
-        udiScan := udiScan + 1;
+        passed := done AND NOT failed;
+        IF NOT done THEN scan := scan + 1; END_IF;
     END_IF;
 END_IF;
+(* The test stops calling its private DUT when done, preserving samples.
+   This is a test runner, not a continuously executing plant controller. *)
 END_PROGRAM

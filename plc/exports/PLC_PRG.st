@@ -1,10 +1,9 @@
 PROGRAM PLC_PRG
 VAR
-    // Write ONLY these inputs when using the manual simulation procedure.
-    simInputs : ST_CellInputs;
+    simInputs : ST_CellInputs; (* Manual watch-list input image. *)
     sorter : FB_ConveyorSorter;
 END_VAR
 
-// IMPLEMENTATION
+(* IMPLEMENTATION: paste below this line into the ST implementation pane. *)
 sorter(i := simInputs);
 END_PROGRAM

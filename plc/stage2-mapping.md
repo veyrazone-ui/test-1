@@ -1,80 +1,121 @@
-# Stage 2 mapping and execution contract
+# Stage 2 PLC design and mapping
 
-Status: source implemented; CODESYS compilation and runtime behavior unverified.
-The canonical process symbols remain in [io-map.csv](../docs/io-map.csv).
-No absolute addresses, physical channels, fieldbus configuration or persistent variables are assigned.
+**Source implementation supplied; CODESYS compilation and execution not yet verified.**
+The full-cell contract remains in `docs/control-design.md`. This document defines
+the smaller Stage 2 port and its explicit differences from the Python reference.
 
-## I/O binding
+## Objects and task
 
-`PLC_PRG.simInputs` is passed by value to `PLC_PRG.sorter.i` once per task.
-The test program instead owns `PRG_TestSequence.simInputs` and its own `sorter`.
-Schedule only one of these programs. Never write controller state, output, counter or timer internals to make a functional test pass.
+All readable ST files are in [exports](exports/). They are authored source, **not
+exports obtained from a compiled IDE project**. Create five DUTs (two enums, input,
+output and trace structures), two PROGRAM POUs and one FUNCTION_BLOCK
+POU as described in [the simulation procedure](stage2-simulation.md).
 
-| Canonical symbol | Manual watch path | Type / initial value | Stage 2 use |
-| --- | --- | --- | --- |
-| start | `PLC_PRG.simInputs.start` | BOOL / FALSE | R_TRIG every call; accepted only in READY with Reset low |
-| reset | `PLC_PRG.simInputs.reset` | BOOL / FALSE | Separate R_TRIG every call; eligible STOPPED/FAULT recovery only |
-| stop | `PLC_PRG.simInputs.stop` | BOOL / FALSE | Level; suppresses movement and enters STOPPED unless already faulted |
-| permissive_ok | `PLC_PRG.simInputs.permissive_ok` | BOOL / TRUE | False latches INTERLOCK_OPEN |
-| station | `PLC_PRG.simInputs.station` | BOOL / FALSE | FEED classification trigger; must clear before counting |
-| metal | `PLC_PRG.simInputs.metal` | BOOL / FALSE | Read on first FEED station detection only; true faults as unsupported |
-| accepted | `PLC_PRG.simInputs.accepted` | BOOL / FALSE | Must be sampled true in ACCEPT, then false with station clear |
-| rejected | `PLC_PRG.simInputs.rejected` | BOOL / FALSE | Included in clear-path and unexpected-exit guards; no reject sequence |
-| pusher_home | `PLC_PRG.simInputs.pusher_home` | BOOL / TRUE | Required for reset/start and throughout conveyor motion |
-| pusher_extended | `PLC_PRG.simInputs.pusher_extended` | BOOL / FALSE | Clear-path and contradictory-limit checks only |
-| conveyor | `PLC_PRG.sorter.o.conveyor` | BOOL / FALSE | True only in resulting FEED or ACCEPT state |
-| extend | `PLC_PRG.sorter.o.extend` | BOOL / FALSE | Always false in Stage 2 |
-| alarm | `PLC_PRG.sorter.o.alarm` | BOOL / FALSE | True in resulting FAULT state |
-| ready | `PLC_PRG.sorter.o.ready` | BOOL / FALSE | READY and clear path/home; does not start motion |
+Use one cyclic task, `MainTask`, interval **T#20ms**, with exactly one call:
+`PLC_PRG` for manual tests or `PRG_TestSequence` for deterministic replay. Both own
+independent controller instances; never schedule both for a single test. The only
+library dependency in the sources is Standard (`R_TRIG`, `TON`). No device addresses,
+GVL, HMI, Python connection, I/O driver or persistent variables are required.
 
-## State codes
+## I/O and initialization
 
-| Code / enum | Movement outputs (conveyor, extend) | Transitions |
-| --- | --- | --- |
-| 0 / STOPPED | 0, 0 | Eligible Reset edge → READY |
-| 1 / READY | 0, 0 | Start edge with Reset low and clear path → FEED; blocked path → FAULT |
-| 2 / FEED | 1, 0 | Station and non-metal → ACCEPT; deadline / invalid feedback / metal → FAULT |
-| 3 / ACCEPT | 1, 0 | Seen accept true, now false, station clear before deadline → count once, READY |
-| 4 / EXTEND | Not implemented | Reserved; if encountered, INVALID_STATE → FAULT |
-| 5 / RETRACT | Not implemented | Reserved; if encountered, INVALID_STATE → FAULT |
-| 6 / FAULT | 0, 0 | Eligible Reset edge → READY; Stop preserves fault |
+[stage2-io-map.csv](stage2-io-map.csv) maps every existing repository symbol to its
+manual watch path, type, initial value and Stage 2 use. The reference names and
+polarities in [docs/io-map.csv](../docs/io-map.csv) are unchanged. The test runner
+uses `PRG_TestSequence.inputs.<symbol>` and `PRG_TestSequence.dut.o.<symbol>` instead.
+These are simulation variables, **not electrical addresses**.
 
-Codes are explicit PLC mappings; the Python reference uses string states. Stage 3 may reuse 4/5 but is not delivered here.
+Inputs initialize to FALSE except `permissive_ok=TRUE` and `pusher_home=TRUE`.
+State initializes to STOPPED, fault to NONE, counts to zero, passage memory to
+FALSE and commands to FALSE. All instance data is non-retained. An IDE Reset Cold
+reinitializes it; an operator Reset input preserves completed counts. IDE Stop/Run
+alone is not a cold startup and can resume instance state. Use Reset Cold for each
+independent test; a real controller restart policy is outside this package.
 
-## Diagnostics
+## State mapping and transitions
 
-| Code | Enum | Condition |
-| --- | --- | --- |
+The Python enum uses strings. Numeric PLC values are explicitly assigned for
+stable watch/HMI display; they are not Python ordinal values.
+
+| PLC state | Code | Conveyor | Extend | Transition / count |
+| --- | ---: | ---: | ---: | --- |
+| STOPPED | 0 | 0 | 0 | Eligible new Reset edge → READY |
+| READY | 1 | 0 | 0 | New Start edge, Reset released and clear path → FEED |
+| FEED | 2 | 1 | 0 | Station=TRUE, metal=FALSE → ACCEPT; metal=TRUE → FAULT |
+| ACCEPT | 3 | 1 | 0 | Seen accepted=TRUE, then accepted=FALSE and station=FALSE → count +1 and READY |
+| EXTEND | 4 | — | — | Reserved; entering it trips INVALID_STATE |
+| RETRACT | 5 | — | — | Reserved; entering it trips INVALID_STATE |
+| FAULT | 6 | 0 | 0 | Eligible new Reset edge → READY; first fault stays latched otherwise |
+
+`ready` means READY **and** clear path. `alarm` means FAULT. `extend` is always
+FALSE, `rejected_count` always zero. A clear path means station, both exits and
+extended feedback FALSE, with home TRUE. Reset eligibility also requires healthy
+permissive and Start/Stop released. A denied Reset edge is consumed: clearing the
+obstruction while holding Reset does not retry it. A Start edge outside READY is
+consumed. No queued starts and no automatic repeat are implemented.
+
+Reset while moving is ignored; use Stop to interrupt. In READY, asserted Reset
+inhibits a concurrent Start edge. This is a deliberate stricter policy than the
+current Python READY branch, which does not check Reset. The simultaneous edge is
+consumed and must be released/repressed. The documented “Reset cannot start motion”
+intent takes priority here; do not claim full behavioral equivalence to Python.
+
+## Scan order and timers
+
+1. Save state at scan entry. Call both edge detectors unconditionally.
+2. Check permissive, conflicting limits/exits and invalid state, preserving any
+   already latched fault. Handle eligible fault reset, otherwise Stop, otherwise
+   STOPPED recovery or READY start. A recovery branch cannot also process Start.
+3. Call FEED TON with the current FEED condition, including the entry scan.
+   Only if the scan **began** in FEED, evaluate timeout first, then home/exit
+   plausibility, then station classification.
+4. Call ACCEPT TON with the current ACCEPT condition, including the FEED→ACCEPT
+   entry scan. Only if the scan **began** in ACCEPT, evaluate timeout first, then
+   home/wrong-exit checks, then passage and count.
+5. Clear passage memory outside ACCEPT. Copy timer diagnostics and derive all
+   outputs from the final state. Stop/fault therefore removes commands this scan.
+
+FEED preset is **5 s**; ACCEPT preset is **3 s**. Both TONs are called exactly once
+each scan. Ordering their calls around the transitions starts each timer on its
+state's entry scan, with expected ET=0, avoiding a planned one-scan start delay.
+`scanState` prevents processing both movement phases on one scan.
+
+The timer for a phase that exits during its own logic still reports its last ET/Q
+for that scan, then resets to ET=0/Q=FALSE on the next scan. For example, FEED→ACCEPT
+reports FEED's last ET and ACCEPT ET=0. An ACCEPT timeout reports accept_q=TRUE on
+the FAULT transition scan and FALSE on the next scan. This intentional diagnostic
+lag differs from Python's `elapsed_ms`, which resets immediately on every state
+transition. Never compare those fields without accounting for this difference.
+
+With an ideal 20 ms task, entry at scan k means ET=(n−k)*20 ms until expiry;
+FEED expires at k+250, ACCEPT at k+150. In the actual IDE, TON uses elapsed time,
+not a Python tick count. Jitter may change the expiry scan. **Q=TRUE wins over
+completion on the same evaluated scan**, even when accepted clears or station
+arrives. Record actual ET/Q and task jitter; do not infer a measured 20 ms response
+from the configured interval. No CODESYS timing equivalence has yet been measured.
+
+The earlier guards have priority over phase timeout: global faults > Stop > phase
+timeout > movement plausibility > normal phase completion. While already faulted,
+Stop never overwrites the first fault. Counts survive Stop/Reset; incomplete passage
+memory does not. A maximum UDINT count faults rather than wrapping.
+
+## Fault mapping
+
+| Code | Enum | Trigger / Stage 2 role |
+| ---: | --- | --- |
 | 0 | NONE | No latched fault |
-| 1 | INTERLOCK_OPEN | Permissive false |
-| 2 | LIMIT_CONFLICT | Home and extended both true |
-| 3 | EXIT_CONFLICT | Accept and reject both true |
-| 4 | START_NOT_CLEAR | Eligible Start with occupied path or pusher not home |
+| 1 | INTERLOCK_OPEN | Simulated permissive FALSE |
+| 2 | LIMIT_CONFLICT | Home and extended both TRUE |
+| 3 | EXIT_CONFLICT | Both exit sensors TRUE |
+| 4 | START_NOT_CLEAR | Eligible Start in READY with occupied path / non-home pusher |
 | 5 | PUSHER_NOT_HOME | Home lost in FEED/ACCEPT |
 | 6 | UNEXPECTED_EXIT | Any exit in FEED; reject exit in ACCEPT |
-| 7 | FEED_TIMEOUT | FEED TON reaches 5 s |
-| 8 | ACCEPT_TIMEOUT | ACCEPT TON reaches 3 s |
-| 9 | METAL_ROUTE_NOT_IMPLEMENTED | Metal detected at FEED station trigger |
-| 10 | INVALID_STATE | Reserved/unhandled state encountered |
+| 7 | FEED_TIMEOUT | FEED TON Q TRUE |
+| 8 | ACCEPT_TIMEOUT | ACCEPT TON Q TRUE |
+| 9 | METAL_ROUTE_NOT_IMPLEMENTED | Metal detected at station; stops instead of misrouting |
+| 10 | INVALID_STATE | Reserved/unrecognized state supplied to this Stage 2 instance |
+| 11 | COUNT_OVERFLOW | Confirmed passage with accepted count already at UDINT maximum |
 
-The first fault persists until eligible Reset. Eligibility: fresh Reset edge, Start and Stop low, permissive healthy, all three path sensors low, home true, extended false. Reset does not clear completed counts. An aborted passage is discarded. Reset during FEED/ACCEPT is consumed and ignored; it is not a stop command. In READY, simultaneous Start/Reset is ignored and a new Start edge is required after release. This last rule is deliberately stricter than the current Python reference, which does not inhibit Start with Reset in READY.
-
-## Scan and timer contract
-
-1. Capture both edges, including in states where they are ignored. Calculate clear path.
-2. Call both TONs with the current state, then capture their Q values into `xFeedDeadline` / `xAcceptDeadline` for this scan.
-3. Default outputs off. Check global faults; keep any previously latched fault.
-4. Process eligible fault reset; otherwise Stop; otherwise exactly one current-state branch. Reset and Start cannot advance two states in one call.
-5. In active states check timeout before home/route checks and normal completion. Same-scan completion loses whenever the relevant TON.Q is true.
-6. On state change only, call both TONs again using the new state: the departing timer resets and the arriving timer starts in the transition scan. Clear passage memory. This intentional second call avoids delaying the timer origin by one cyclic scan.
-7. Publish final ET values and derive outputs from the resulting state.
-
-At FEED/ACCEPT entry, ET is expected to be T#0ms; after exit, both inactive timers must report ET=0 and Q=false. `xFeedDeadline`/`xAcceptDeadline` and `tFeedDecisionElapsed`/`tAcceptDecisionElapsed` capture Q/ET before transitions reset the timers. A timeout scan can therefore show a deadline snapshot true even though the reset timer's final ET is zero. Inspect the decision snapshots when verifying deadline priority and the final ET fields when verifying reset. TON ET may saturate at PT; PT alone does not prove zero lateness in wall-clock time.
-
-Timers use Standard-library elapsed time, not `scan_count * 20 ms`. In an ideal 20 ms task, FEED reaches 5 s on the 250th scan after entry and ACCEPT reaches 3 s on the 150th. The IDE is not a real-time scheduler: record actual ET and task timing. A nominal scan-249 arrival can be late if the task is delayed. Do not declare an exact-boundary pass using a stopwatch or a watch-window refresh. If runtime TON behavior differs from the stated entry/reset contract, retain the discrepancy and fix/retest before closing the gate.
-
-## Lifetime and limits
-
-All application variables are non-retained. A new initialized instance starts STOPPED, count 0, outputs false. Operator Stop/Reset preserves count; CODESYS Reset Origin/new download is a separate lifecycle operation and initializes it. Do not claim behavior across warm restarts or online changes until separately checked. The count is UDINT; overflow behavior is outside this one-part gate.
-
-This source handles only one manually staged non-metal part per Start. Sensor debounce, short pulses missed between scans, mechanical motion, reject operation, full Stage 3 fault coverage and hardware safety are not verified. A post-selection metal change in ACCEPT does not change the route. Guards included here support the accept sequence; they do not complete Stage 3 or R01–R12 verification.
+These supporting guards let the partial sequence stop deliberately; they do not
+complete Stage 3. EXTEND/RETRACT, reject counting/timers, full fault-matrix replay,
+HMI, native project/archive, CAD and hardware commissioning remain outstanding.

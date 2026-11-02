@@ -1,106 +1,173 @@
-# CODESYS IDE simulation: Stage 2 procedure and expected results
+# Stage 2 CODESYS IDE simulation procedure
 
-**All CODESYS outcomes below are EXPECTED, NOT RUN.** Record observations in [stage2-results.csv](../evidence/stage2/stage2-results.csv). A Python test pass or source review is not a PLC build or simulation result.
+**Procedure and expected results only. All PLC runs are NOT RUN as supplied.**
+Use CODESYS Development System V3 with its built-in **IDE Simulation** command.
+This is not a Python/PLC connection, a SoftPLC installation guide or the separate
+CODESYS Simulation Interface product. No physical I/O is mapped.
 
-## Build the project
+## 1. Create and compile the application
 
-1. Use CODESYS Development System V3.5. Record exact service pack/patch, compiler version, device description, OS and resolved Standard library version. This package has not established a tested version baseline.
-2. File → New Project → Standard project; choose an installed CODESYS device supporting IDE simulation and ST for PLC_PRG. Save as `plc/ConveyorSorting.project`. Use no physical I/O mapping. There is no `.project` in this package yet.
-3. Under Application, add DUT objects named `E_CellState`, `E_CellFault`, `ST_CellInputs`, `ST_CellOutputs`, and `ST_Stage2Sample`. Replace their declaration contents with the corresponding complete `.st` files in `exports/`, including attributes and TYPE/END_TYPE.
-4. Add `FB_ConveyorSorter` as a Function Block in ST and `PRG_TestSequence` as a Program in ST. Use the generated `PLC_PRG` Program for the manual wrapper. For these three POUs, paste the source from its opening FUNCTION_BLOCK/PROGRAM line through the final END_VAR into the declaration pane. Paste the code after the `// IMPLEMENTATION` marker into the implementation pane, **excluding** the terminal END_FUNCTION_BLOCK/END_PROGRAM. The `.st` files are readable source listings, not native CODESYS import files or compiler-generated exports. Do not use File → Import expecting raw `.st` to reconstruct the project.
-5. In Library Manager, resolve the Standard library containing TON and R_TRIG. Confirm the types resolve; do not substitute unrelated vendor timers without reviewing the timing contract.
-6. Under Task Configuration, set MainTask to **Cyclic**, interval **T#20ms**, and one call: `PLC_PRG`. Remove other application calls. Record task priority and watchdog settings; do not assume they prove real-time performance. There must be exactly one sorter invocation per cyclic task.
-7. Build → Rebuild. Save the full messages log and record errors and warnings. Required result: zero errors; inspect every warning. Fix and re-run before claiming compilation. Capture a task-configuration screenshot.
-8. While logged out, select Online → Simulation, then Online → Login and accept creation/download of the simulated application. Confirm the IDE indicates simulation. Start with Debug → Start. No gateway connection to a real PLC is required for this procedure.
-9. Use Reset Origin/re-download when a fresh test instance is requested; record which operation was used. This is distinct from the application input `simInputs.reset`. Clear all forcing and prepared values before each test.
+1. Record repository commit, date, operator, OS, full CODESYS V3 version, compiler
+   version, device name/version and resolved Standard library version in
+   [the run record](../evidence/stage2/README.md). Do not invent version numbers.
+2. File → New Project → Standard Project. Use an installed CODESYS Control Win V3
+   device (or the corresponding x64 device supplied by your installation), with
+   `PLC_PRG` language Structured Text. Record the actual selection. Save as
+   `plc/ConveyorSorting_Stage2.project`.
+3. Under Application add DUT enum objects `E_CellState`, `E_CellFault` and structure
+   objects `ST_CellInputs`, `ST_CellOutputs`, `ST_Stage2Sample`. Replace each DUT's
+   editor text with its corresponding complete `exports/*.st` contents, including
+   TYPE/END_TYPE and attributes. Names must match exactly.
+4. Add `FB_ConveyorSorter` as a Function Block in ST. Replace the **declaration
+   pane** with its file from `FUNCTION_BLOCK` through the last `END_VAR`, before
+   the IMPLEMENTATION marker. Paste the remaining implementation into the lower
+   ST pane, **omitting the final END_FUNCTION_BLOCK** (the IDE supplies the object
+   boundary). Do the same for `PLC_PRG` and new PROGRAM `PRG_TestSequence`, omitting
+   their final END_PROGRAM lines. The `.st` files are readable combined source;
+   this procedure does not assume arbitrary `.st` file import support.
+5. In Library Manager confirm Standard resolves and provides TON/R_TRIG. If it is
+   not present, add Standard. Do not replace timers with Python or custom counters.
+6. In Task Configuration set `MainTask` Type=Cyclic, Interval=`T#20ms`; keep only
+   the `PLC_PRG` call. Record priority and watchdog settings as configured. Remove
+   duplicate/freewheeling calls. No other task may call this controller instance.
+7. Build → Rebuild. Save the **actual** compiler messages as
+   `evidence/stage2/compile-log.txt`, with a task-configuration screenshot. Required
+   result: zero errors; investigate and record every warning. Fix source and repeat
+   compilation if necessary. A clean package check is not a compiler result.
+8. While logged out, choose Online → Simulation; verify the simulation indicator.
+   Online → Login, accept creation/loading of the simulated application, then
+   use Debug → Start when ready. No communication gateway or physical target
+   connection is needed for IDE simulation.
 
-## Watch and trace setup
+## 2. Manual input and observation setup
 
-Add all fields of `PLC_PRG.simInputs`, `PLC_PRG.sorter.o`, `eState`, `eFault`, `udiAcceptedCount`, `xAcceptedSeen`, `xStartEdge`, `xResetEdge`, `tFeedElapsed`, `tAcceptElapsed`, `tFeedDecisionElapsed`, `tAcceptDecisionElapsed`, `xFeedDeadline` and `xAcceptDeadline`. For automatic runs use the same paths under `PRG_TestSequence` and also watch `xRun`, `xDone`, `xFailed`, `udiScan` and `samples`. Decision ET fields preserve elapsed values from before the state transition; final ET fields show the reset/new timer.
+Use a Watch list for all paths in [stage2-io-map.csv](stage2-io-map.csv), plus:
 
-Use a task-sampled CODESYS Trace, if supported, to capture state, count, station/accepted, both ETs, both deadline snapshots and conveyor each MainTask call. If unavailable, the test driver's `samples` array stores scan-by-scan snapshots for automatic cases; save inspected values/export or screenshots and identify their scan indexes. The ordinary watch refresh is too slow to prove a one-scan edge or exact deadline. Never change state or timer internals to manufacture a pass.
+```text
+PLC_PRG.sorter.state
+PLC_PRG.sorter.fault
+PLC_PRG.sorter.accepted_count
+PLC_PRG.sorter.rejected_count
+PLC_PRG.sorter.accepted_seen
+PLC_PRG.sorter.start_edge
+PLC_PRG.sorter.reset_edge
+PLC_PRG.sorter.feed_et
+PLC_PRG.sorter.accept_et
+PLC_PRG.sorter.feed_q
+PLC_PRG.sorter.accept_q
+```
 
-Use **Write Values** for manually staged Boolean inputs and hold each condition across multiple scans (e.g. 100 ms or more). If forcing is used, remove it deliberately before a sequenced run: a persistent force can overwrite the driver's stimuli. Do not pause, single-step, use breakpoints or change task settings during timer measurement. TON elapsed time and task scan count are different observations.
+Write prepared **input** values; do not force state, counters, outputs or timer
+internals to create a pass. No forces should remain active. If using Force Values
+for an exploratory input test, remove all forces before the next case and record
+that choice. Prefer Write Values so a lingering force cannot override the runner.
 
-## Manual first-count walkthrough (S2-01 through S2-05)
+For a new independent manual case: Stop the IDE application, release all forces,
+use IDE Reset Cold, verify the input defaults, then Start the IDE application.
+This is distinct from the Boolean operator `stop`, `reset` and `start` inputs.
+Unless stated otherwise, pulse means write TRUE for at least three task cycles,
+then FALSE for at least three cycles. One-scan edge diagnostics may be invisible
+at the Watch refresh rate; use the trace/runner for scan-level evidence.
 
-Start with all defaults from [mapping](stage2-mapping.md): clear station/exits, non-metal, permissive/home true, extended false, buttons low.
+“Arm” means pulse operator Reset with clear path, Start/Stop FALSE and healthy
+permissive: expected READY with both movement commands FALSE. “Begin” means arm,
+then pulse operator Start: expected FEED. “Enter ACCEPT” means begin, then write
+station=TRUE with metal=FALSE before 5 s; expected ACCEPT.
 
-| Step | Write / observation | Expected state; count; movement |
+## 3. Manual test matrix
+
+Each row is an independent cold run unless it explicitly continues a cycle.
+Complete inputs before the relevant 5 s/3 s deadline; use the scripted normal run
+if manual entry is too slow. Counts below begin at zero unless specified. For
+each case record actual state, fault, outputs, count, trace path and PASS/FAIL.
+
+| ID | Action | Expected result |
 | --- | --- | --- |
-| A | Fresh initialized instance; run several scans | STOPPED; 0; conveyor=extend=false |
-| B | Start true while STOPPED, hold | STOPPED; 0; no motion |
-| C | Start false, then Reset true | READY; 0; no motion, ready=true |
-| D | Keep Reset true; no other change | READY; 0; one Reset edge only |
-| E | Reset false; then Start true and keep high through the cycle | FEED; 0; conveyor=true, extend=false; FEED ET starts at 0 |
-| F | Before 5 s, set station=true with metal=false | ACCEPT; 0; conveyor=true; FEED ET=0, ACCEPT ET starts at 0 |
-| G | Before 3 s, set accepted=true; hold briefly | ACCEPT; 0; xAcceptedSeen=true |
-| H | Set accepted=false while station remains true | ACCEPT; 0; no count until station clears |
-| I | Before 3 s total in ACCEPT, set station=false | READY; exactly 1; movement off; both timers reset |
-| J | Keep Start high; toggle accepted true/false while READY, then clear | READY; still 1; no repeated cycle/count |
-| K | Release Start; new Start edge | FEED; still 1; fresh FEED ET; next part needs a new passage |
+| S2-01 | Cold start, then pulse Start before Reset | STOPPED, count 0, commands off; Start does not arm |
+| S2-02 | Arm; continue holding Reset for several scans | READY, count 0, commands off; no repeated action |
+| S2-03 | In STOPPED assert Reset+Start together; clear Start while Reset stays TRUE; then release/repress Reset | Remains STOPPED until new eligible Reset; then READY, no motion |
+| S2-04 | READY: assert Reset+Start together; release Reset while Start stays TRUE; release/repress Start | No motion until the fresh Start; then FEED. This READY inhibit is stricter than Python |
+| S2-05 | Begin holding Start TRUE; enter ACCEPT; accepted TRUE with station TRUE; clear station while accepted stays TRUE; clear accepted | No count while accepted high; final READY, accepted_count=1, rejected_count=0, commands off |
+| S2-06 | Continue S2-05, holding Start TRUE for at least 0.2 s, then release/repress Start | Stays READY/count 1 while held; fresh edge begins next FEED without adding a count |
+| S2-07 | Enter ACCEPT; accepted TRUE then FALSE while station stays TRUE; then clear station | Count stays 0 until station clear; then READY/count 1 |
+| S2-08 | Enter ACCEPT; clear station, never assert accepted; wait beyond 3 s | FAULT/ACCEPT_TIMEOUT, count 0, commands off |
+| S2-09 | Enter ACCEPT; accepted TRUE and station FALSE; keep accepted high beyond 3 s | FAULT/ACCEPT_TIMEOUT, count 0; held high is not passage |
+| S2-10 | Begin; never assert station; wait beyond 5 s | FAULT/FEED_TIMEOUT, count 0, commands off |
+| S2-11 | Repeat Stop interruption in FEED and ACCEPT (in ACCEPT first set accepted TRUE). Clear path, release Stop; pulse Reset then Start | Same evaluated Stop scan is STOPPED/commands off; no count. Release alone cannot restart; Reset gives READY only; fresh Start required. Old passage memory cannot complete the new cycle |
+| S2-12 | Enter FEED/ACCEPT separately; pulse Reset while moving with Start released | State/route unchanged, no count caused by Reset; normal phase timer continues, not restarted |
+| S2-13 | FEED/ACCEPT separately: permissive FALSE; restore permissive, clear path; apply Stop and then release | FAULT/INTERLOCK_OPEN, commands off, count unchanged; restoration and Stop do not erase fault; eligible Reset required |
+| S2-14 | Fault via permissive loss, restore it but keep station TRUE; hold Reset TRUE; then clear station; release/repress Reset | Blocked/held Reset leaves FAULT; new eligible edge → READY; outputs off |
+| S2-15 | First complete one accept; Stop and Reset; begin another cycle, interrupt with permissive loss, clear path and Reset | Completed accepted_count remains 1 through all recovery; interrupted cycle adds nothing |
+| S2-16 | Begin, set station=TRUE and metal=TRUE | FAULT/METAL_ROUTE_NOT_IMPLEMENTED, commands off, both counts 0; no reject implementation claimed |
+| S2-17 | Enter ACCEPT with metal FALSE; then toggle metal TRUE and finish passage | Route remains ACCEPT; normal completion counts exactly once |
+| S2-18 | Independent runs: both limits TRUE; both exits TRUE; lose home in FEED/ACCEPT; any exit in FEED; reject exit in ACCEPT | Respectively LIMIT_CONFLICT, EXIT_CONFLICT, PUSHER_NOT_HOME, UNEXPECTED_EXIT; commands off, no count |
+| S2-19 | READY, block station then press Start. Clear path; set permissive FALSE and Stop TRUE | First fault START_NOT_CLEAR remains latched despite new conditions. Restore all, release Start/Stop, new Reset → READY |
+| S2-20 | Observe phase entry, exit, Stop, fault and recovery across above runs | Entry ET=0; no carry-over; inactive timer resets by next scan; trace proves timer-call order. New FEED has a fresh 5 s window |
 
-Do not count a live run as successful merely because a sensor became true. Save evidence of G, H and I. Step K is optional for the one-count recording but required for S2-05 rearming; stop the new cycle without presenting another part.
+Use one dedicated manual sequence for the nominal 1.8 s station-to-accept travel if
+desired; manual tests and scripted tests do not validate the proposed mechanics.
 
-## Test matrix
+## 4. Deterministic replay and deadline cases
 
-For each row record actual result, pass/fail/blocked, version, source revision and evidence path. Unless specified otherwise, use a fresh initialized instance and the Reset/Start setup above. "Outputs off" means conveyor and extend false; alarm may be true.
+Log out. Replace the task call with **only `PRG_TestSequence`**, rebuild and log in
+to IDE simulation. Remove all forces. For **every case**, stop the application,
+Reset Cold, write `PRG_TestSequence.testCase` while stopped, then Run. Do not change
+the case during a run; changing case or Stop/Run without Reset Cold does not
+restart its counter or controller. Observe `done`, `passed`, `failed`, `scan`,
+`dut` and `samples`. These flags are outputs from the test, not evidence until run.
 
-| ID | Stimulus | Expected result |
-| --- | --- | --- |
-| S2-00 | Assemble project, Rebuild, inspect MainTask | Zero compile errors; warnings reviewed; one call at 20 ms; native project/archive saved |
-| S2-01 | Startup; Start held before Reset; release Start; valid Reset | STOPPED until Reset; READY without motion; count 0 |
-| S2-02 | Reset with station/accepted/rejected occupied, no home, extended feedback, Start high or Stop high; then clear conditions while Reset remains high | No recovery/motion; relevant global faults may latch; a new eligible Reset edge is required |
-| S2-03 | Simultaneous Start+Reset in STOPPED and READY; release Reset while Start stays high | No motion; fresh Start after releasing both is required in READY |
-| S2-04 | Normal G→H→I true/false passage with station interlock | Exactly one count only at I; READY and outputs off; later metal changes in ACCEPT do not reroute |
-| S2-05 | Hold Start through completion; pulse Start during ACCEPT; new Start only after READY | No queued/repeated start; edge in active state consumed; a new edge in READY starts FEED |
-| S2-06 | Leave station false in FEED | At TON.Q, FEED_TIMEOUT, FAULT, no count, outputs off |
-| S2-07 | In ACCEPT keep accepted true beyond 3 s | No count while held; ACCEPT_TIMEOUT, outputs off |
-| S2-08 | In ACCEPT never assert accepted; station clear | No count; ACCEPT_TIMEOUT |
-| S2-09 | Accept true then false but station held true | No count; ACCEPT_TIMEOUT if station never clears |
-| S2-10 | Observe entry, exit, fault and restart ET/Q for both TONs | Entry ET=0; inactive timers ET=0/Q=false; FEED time does not carry into ACCEPT or next cycle |
-| S2-11 | Station arrives at FEED elapsed 4980 ms and 5000 ms on separate runs | Before deadline → ACCEPT; at deadline/Q=true → FEED_TIMEOUT; log actual ET/scan timing |
-| S2-12 | Seen accept true; final false with station clear at ACCEPT 2980 ms and 3000 ms on separate runs | Before deadline → count 1, READY; at deadline/Q=true → count 0, ACCEPT_TIMEOUT |
-| S2-13 | Operational Stop in FEED and ACCEPT, including with passage completion | Same evaluated scan outputs off, STOPPED, no interrupted count; clear/release then fresh Reset and Start |
-| S2-14 | Reset during FEED/ACCEPT; hold until a fault, then restore conditions | Reset does not restart or clear an active cycle; consumed edge cannot later reset fault; new eligible edge required |
-| S2-15 | Lose permissive, home, or assert wrong exit during each active state; also test contradictory limits/exits | Corresponding latched fault; outputs off; clear input alone does not restart; Stop preserves first fault |
-| S2-16 | Complete one count, Stop, Reset; abort another seen-high passage and reset | Count stays 1 through operator actions; aborted passage never counts and memory is cleared |
-| S2-17 | Station true with metal=true in FEED | METAL_ROUTE_NOT_IMPLEMENTED, count 0, both movement outputs off; no reject operation |
-| S2-18 | READY with occupied path; new Start (Reset low) | START_NOT_CLEAR, outputs off, no count |
+The runner writes all ten inputs, calls its private DUT once per active scan and
+stores the post-call sample in `samples[scan]`. When done it freezes the array;
+it is not a continuously executing process controller. Samples are bounded at
+301 rows. Copy/export the used samples or capture the relevant rows and save the
+actual observations. Restore `PLC_PRG` for subsequent manual tests.
 
-Rows with multiple conditions need separate sub-run records. S2-15 checks only the guards in this source; it does not claim the full Stage 3 fault/reject matrix. S2-11/12 need fresh fixtures for both sides of the deadline. Physical commissioning remains outside every row.
+| ID | testCase | Scripted stimulus / nominal scan | Expected terminal result |
+| --- | ---: | --- | --- |
+| S2-21 | 0 | Reset at 1, held Start from 2, station at 3, accepted high 4–5, both clear 6; Stop 9, Reset 10; finish 12 | passed=TRUE; READY/count 1; no repeat while Start held; no motion on Reset |
+| S2-22 | 1 | FEED enters 2; station arrives 252 (nominal elapsed 5000 ms) | FAULT/FEED_TIMEOUT, feed_q=TRUE, count 0; timeout wins |
+| S2-23 | 2 | ACCEPT enters 3; accepted high 4–152 and clears 153 (nominal 3000 ms) | FAULT/ACCEPT_TIMEOUT, accept_q=TRUE, count 0; timeout wins |
+| S2-24 | 3 | Station arrives 251 (nominal FEED 4980 ms); accepted high 252, clear 253 | ACCEPT at 251 with feed_q=FALSE; terminal READY/count 1 |
+| S2-25 | 4 | ACCEPT enters 3; accepted high 4–151, clear 152 (nominal 2980 ms) | READY/count 1, accept_q=FALSE at completion |
 
-## Repeatable automatic stimulus driver
+For S2-22–25 a nominal scan number is **not proof of a timed boundary**. Review the
+prior/current samples, actual ET/Q and task Monitoring jitter. If jitter changes
+the outcome, retain the failure, label the timing comparison INCONCLUSIVE, and
+investigate/repeat; do not relabel it PASS or alter timeout presets to force it.
+To substantiate “same-scan timeout wins”, the capture must show completion input
+arriving while that timer's Q is TRUE in that scan. To substantiate “one scan
+early”, record the actual adjacent task timestamps and ET below PT on completion.
+Add a CODESYS Trace sampled by MainTask for inputs, state, Q/ET, outputs and count
+when the installed target supports it. Record any measured offset from the ideal
+20 ms model. Never use manual mouse timing to claim an exact deadline test.
 
-For repeatable sequences, log out and replace the MainTask call with **PRG_TestSequence only**. Set `uiScenario` and `uiArrivalScan` declaration initializers offline, rebuild, reset origin/re-download, then start the task and write `xRun=TRUE`. No manual input writes/forces during the run. `xDone` freezes the final sample index, and the following scan commands Stop. Judge the stored samples/trace, not the later live STOPPED state. A latched fault remains FAULT after that Stop. Reset Origin is required between runs; toggling xRun does not reset the test.
+For timer-reset S2-20, use a manual continuous run or the S2-21 samples; a runner
+freezing on a timeout cannot supply a post-timeout reset scan.
 
-| uiScenario | uiArrivalScan | Expected frozen evidence |
-| --- | --- | --- |
-| 0 | ignored | Scan 0/1 STOPPED; 2/3 READY; 4 FEED; 10 ACCEPT; 11–15 seen-high/count0; 16–17 accepted low but station high/count0; 18 READY/count1; through 40 no repeat; xFailed=false |
-| 1 | ignored | FEED_TIMEOUT by scan 400; count0; nominal deadline scan 254 |
-| 2 | ignored | ACCEPT_TIMEOUT by scan 400; held accepted never counts; nominal deadline scan 160 |
-| 3 | ignored | ACCEPT_TIMEOUT by scan 400; never-seen accept never counts |
-| 4 | ignored | ACCEPT_TIMEOUT by scan 400; station prevents counting |
-| 5 | ignored | Scan 10 FAULT/METAL_ROUTE_NOT_IMPLEMENTED; count0; extend=false |
-| 6 | 249 then 250 | Station at 249/250 scans after FEED entry (4); expected before/at results in S2-11 |
-| 7 | 149 then 150 | Accept falls at 149/150 scans after ACCEPT entry (10); expected before/at results in S2-12 |
+## 5. Save evidence and decide the gate
 
-`xFailed` checks several invariants and the normal-cycle count/state, not all matrix outcomes. False is not sufficient to pass the fixture: inspect expected fault, count, transitions and timing. Driver source is also **uncompiled and unrun** in this package.
+Copy results into [stage2-results.csv](../evidence/stage2/stage2-results.csv) and
+[README.md](../evidence/stage2/README.md). Expected rows and baseline Python logs
+must never be renamed to actual PLC traces. Retain compiler log, task screenshot,
+startup/held-Start/passage trace, timer/boundary observations, and failed results
+with any fix commit. Save the native `.project`, a dependency `.projectarchive`
+using the IDE's project archive command, and a native IDE export alongside the
+readable source. Add actual filenames and version numbers to the evidence index.
 
-For boundary runs inspect the relevant decision snapshot on the arrival scan. If IDE jitter means the nominal scan arrival was not actually before/at the timeout, record that run as inconclusive for the intended timing point, retain the trace, and repeat. Do not force TON.Q or edit internal state to get the desired result. Do not replace measured timing with the ideal scan numbers above.
+Minimum Stage 2 gate: zero compile errors, documented warnings/task setup, verified
+startup/Reset/Start behavior, FEED→ACCEPT, exactly one confirmed count, held-input
+and timeout behavior, with native project and actual evidence attached. Keep the
+gate OPEN if any required test is NOT RUN, FAIL or INCONCLUSIVE. Stage 3 reject
+handling and Stage 4 full-cell acceptance remain separate gates.
 
-## Evidence and completion gate
+## Official references used for this procedure
 
-Save `.project`, `.projectarchive` with dependencies, readable exported source or PLCopen XML, build messages, task screenshot, normal-cycle trace, both timeout traces and before/at boundary traces. Fill every Stage 2 result row with actual observations and artifact links. A video is optional; invented screenshots or traces are not evidence.
+- [Testing in Simulation Mode](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_testing_in_simulation_mode.html)
+- [Simulation command and limitations](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_cmd_simulation.html)
+- [Cyclic task configuration](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_f_reference_task.html)
+- [Standard TON](https://content.helpme-codesys.com/en/libs/Standard/3.5.15.0/Timer/TON.html)
+- [Standard trigger library](https://content.helpme-codesys.com/en/libs/Standard/3.5.22.0/Trigger/fld-Trigger.html)
 
-Stage 2 is complete only after zero build errors and the startup/Reset/Start/confirmed-count/timer tests pass in IDE simulation. Any unexplained offset, warning or failure remains open. Full R01–R12 testing, reject operation, HMI, CAD and physical commissioning are separate later gates.
-
-## Official references
-
-- [Configuring a cyclic task](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_creating_task_configuration.html)
-- [Testing in simulation mode](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_testing_in_simulation_mode.html)
-- [Simulation limitations](https://content.helpme-codesys.com/en/CODESYS%20Development%20System/_cds_cmd_simulation.html)
-- [Standard TON semantics](https://content.helpme-codesys.com/en/libs/Standard/3.5.15.0/Timer/TON.html)
-- [Standard R_TRIG](https://content.helpme-codesys.com/de/libs/Standard/3.5.18.0/Trigger/R_TRIG.html)
-
-The library documentation version is a reference, not an assertion about the user's installed library. Consulted 2 November 2026.
+Consulted 2 November 2026. These explain the IDE and library semantics; they do
+not certify this code. IDE simulation runs inside the development process and
+does not establish real-time hardware behavior or physical I/O operation.

@@ -1,44 +1,74 @@
 # Stage 2 evidence register
 
-Prepared 2 November 2026 against upstream `b4ae9c8e9a807e83dc25c779da03d02f277d8354`.
-**Source package delivered; Stage 2 acceptance gate OPEN.**
+**Gate: OPEN. Source authored; native CODESYS compile and simulation NOT RUN.**
+Package updated on 2 November 2026, continuing draft PR #2 (previous head
+`58b523eede5140ca54a20d2d8d56792f5029a3e3`), from main baseline
+`b4ae9c8e9a807e83dc25c779da03d02f277d8354`.
 
-| Item | Actual status |
+## Evidence supplied
+
+| Item | Actual status | Evidence / interpretation |
+| --- | --- | --- |
+| Source integrity | SHA-256 inventory | [source-sha256.txt](source-sha256.txt); identifies this source revision only |
+| Stage 2 ST implementation | Authored, reviewable source | [PLC package](../../plc/README.md); not a compiler-generated export |
+| I/O/state/fault mapping | Written | [Design](../../plc/stage2-mapping.md), [I/O CSV](../../plc/stage2-io-map.csv) |
+| CODESYS procedure and expected results | Written | [25 cases](../../plc/stage2-simulation.md), including five runner modes |
+| Python reference regression | See actual local check log | [local-checks.txt](local-checks.txt); validates Python only |
+| Source-package consistency | See actual local check log | I/O declarations, object inventory, evidence slots and local links; not ST parsing |
+| Native CODESYS project / archive | Not created | Must be created with the IDE and retained after build/run |
+| CODESYS compile | NOT RUN | No compiler available in the preparation environment |
+| CODESYS runtime cases | NOT RUN | [stage2-results.csv](stage2-results.csv): all actual fields intentionally empty |
+| Actual PLC trace / screenshots | Not captured | Source and expected results must not be presented as observations |
+| Hardware / electrical / mechanical commissioning | Not performed; out of scope | No claim |
+
+The preparation environment supplies Python 3.12.14, but no CODESYS, Wine or
+`iec2c` executable was found on PATH. Local Python results cannot establish ST
+syntax correctness, library resolution, task timing or PLC behavior. No compiled
+project or screenshots have been fabricated.
+
+## Record for the first IDE run
+
+Fill with actual information; pending values are intentionally not guessed.
+
+| Field | Value |
 | --- | --- |
-| Accept-route Structured Text, I/O/state mapping | Written; source review only |
-| IDE setup, manual matrix and simulation stimulus driver | Written; expected outcomes, not execution evidence |
-| Existing Python reference regression suite | See [local-checks.txt](local-checks.txt); these tests do not execute ST |
-| Source hashes and repository package checks | See [source-sha256.txt](source-sha256.txt) and local log; integrity checks only |
-| CODESYS compiler/version/library resolution | NOT RUN; CODESYS is unavailable in the authoring environment |
-| Native project and dependency archive | NOT CREATED |
-| CODESYS IDE simulation, TON timing and boundary behavior | NOT RUN |
-| Actual PLC traces, screenshots and build log | NOT CAPTURED |
-| Physical I/O, hardware commissioning and machine safety validation | OUT OF SCOPE; not performed |
+| Tested source commit | PENDING |
+| Operator / date | PENDING |
+| OS and CODESYS full version / architecture | PENDING |
+| Compiler version | PENDING |
+| Device name / description version | PENDING |
+| Resolved Standard library version | PENDING |
+| Task name / interval / priority / watchdog | PENDING (required interval: T#20ms) |
+| Task entry POU per case | PENDING (PLC_PRG or PRG_TestSequence, exactly one) |
+| IDE Simulation indicator verified | PENDING |
+| Native project / archive / IDE export filenames | PENDING |
+| Compilation errors / warnings and dispositions | PENDING |
+| Input writing / forcing method and force cleanup | PENDING |
+| Observed cycle time / jitter / timer offsets | PENDING |
+| Capture method / trace sampling task | PENDING |
 
-The [result register](stage2-results.csv) deliberately contains NOT_RUN for every CODESYS test. Expected values in [the procedure](../../plc/stage2-simulation.md) are not actual observations. No generated reference trace has been relabeled as a PLC trace.
+For every S2 case fill actual result, status, evidence path, operator, date and
+source commit in the CSV. Split multi-condition rows into separate observations
+in an attached run note so each variation is evidenced. PASS means all variations
+in that row passed. A timing run affected by jitter can be INCONCLUSIVE; preserve
+its capture and explain the limitation. Never copy expected text into actual
+without observing it.
 
-## Fill in after an actual IDE run
+## Files to add after genuine IDE work
 
-- Tested repository commit and source hashes:
-- Date/operator:
-- OS, CODESYS service pack/patch and compiler:
-- Device description/version and Standard library resolved version:
-- MainTask interval, priority, watchdog and actual timing observations:
-- Build errors/warnings, reviewed warnings and build log path:
-- Native project/archive paths:
-- Selected test driver scenario/arrival scan (or manual case):
-- Actual outcomes, discrepancies and evidence paths in CSV:
+These are **future filenames**, not existing evidence:
 
-Suggested future evidence paths (not present and not claimed): `build-messages.txt`, `task-20ms.png`, `normal-cycle.csv`, `feed-timeout.csv`, `accept-held.csv`, `feed-before-deadline.csv`, `feed-at-deadline.csv`, `accept-before-deadline.csv`, `accept-at-deadline.csv`. Native project/archive belong under `plc/`. Add actual exports and links when created; do not add empty placeholder binaries.
+- `plc/ConveyorSorting_Stage2.project`
+- `plc/ConveyorSorting_Stage2.projectarchive`
+- `plc/ConveyorSorting_Stage2.export` (or actual IDE export format)
+- `evidence/stage2/compile-log.txt`
+- `evidence/stage2/task-configuration.png`
+- `evidence/stage2/startup-accept-actual.csv` (or clearly labelled actual capture)
+- `evidence/stage2/timer-boundaries-actual.csv` and timing observations
+- `evidence/stage2/ide-run-notes.md`
 
-Keep failures and inconclusive timing runs visible. When the same test has several subcases, add rows with suffixes such as S2-02a. Each before/at deadline run needs its own actual elapsed-time observation. The result CSV's NOT_RUN status must be replaced only after execution, not after code inspection.
-
-## Open verification points
-
-1. Verify declarations and implementation compile with the chosen CODESYS/Standard versions.
-2. Verify the intentional transition-time second TON calls start/reset timers in that scan; verify entry ET=0 and no phase carry-over.
-3. Confirm same-scan timeout priority from decision snapshots and a task-sampled trace. IDE jitter may make nominal scan-boundary arrivals inconclusive.
-4. Run every Stage 2 case, including fresh Start/Reset edges, held sensors, interruption and count preservation. No hidden assumption that source review proves these.
-5. Save the native project/archive and actual exported source, then update the main README only to the level demonstrated.
-
-The source is assistance-produced portfolio material. Reproducing the build/tests and explaining the decisions is the next learning milestone; source delivery alone does not establish individual PLC proficiency.
+Retain the actual source/export associated with the tested commit. If paste or
+compile fixes are needed, commit them and rerun affected tests before updating
+README status. Stage 2 only closes when the documented compile/runtime evidence
+exists and all required cases pass. This does not close Stage 3/4 or certify a
+physical conveyor, safety function, CAD model or machine commissioning.

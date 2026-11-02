@@ -1,36 +1,68 @@
 # Stage 2 PLC source package
 
-**Implemented in source; not compiled or run in CODESYS. Stage 2 gate remains open.** No native `.project`, `.projectarchive`, compiler-generated export, build success or measured PLC trace is claimed. The Python controller remains a separate behavioral reference.
+**Status: authored Structured Text and simulation procedure supplied. CODESYS
+compilation and execution NOT VERIFIED; Stage 2 gate OPEN.** There is no native
+`.project`, `.projectarchive`, compiled PLC application or measured PLC trace yet.
+The 27 reference tests exercise Python, not this ST implementation.
 
-The delivered ST sequence is **STOPPED → READY → FEED → ACCEPT → READY**. An eligible Reset establishes READY without motion; a fresh Start edge starts one manually staged non-metal part. The accept sensor must be sampled true and then false, with the station clear, before exactly one count. Holding Start cannot repeat the cycle. FEED and ACCEPT have separate 5 s and 3 s TONs with timeout priority over same-scan success.
+## Start here
 
-## Package contents
+1. Read [design and state/fault mapping](stage2-mapping.md) and the
+   [symbol-to-watch-path I/O map](stage2-io-map.csv).
+2. Follow [CODESYS project setup, manual tests and scripted replay](stage2-simulation.md).
+3. Record actual results in [the Stage 2 evidence register](../evidence/stage2/README.md)
+   and [results.csv](../evidence/stage2/stage2-results.csv). All PLC cases initially say NOT RUN.
 
-| File | Purpose |
+## Supplied files
+
+| File | CODESYS object / purpose |
 | --- | --- |
-| [E_CellState.st](exports/E_CellState.st) | Explicit state codes; reject states reserved |
-| [E_CellFault.st](exports/E_CellFault.st) | Guard/timeout fault codes for this subset |
-| [ST_CellInputs.st](exports/ST_CellInputs.st), [ST_CellOutputs.st](exports/ST_CellOutputs.st) | Symbols and defaults matching the canonical I/O map |
-| [FB_ConveyorSorter.st](exports/FB_ConveyorSorter.st) | Controller, edge detectors, timers, passage memory and count |
-| [PLC_PRG.st](exports/PLC_PRG.st) | Manual simulation inputs; one controller call |
-| [ST_Stage2Sample.st](exports/ST_Stage2Sample.st), [PRG_TestSequence.st](exports/PRG_TestSequence.st) | Simulation-only stimuli, invariant checks and scan snapshots; unrun |
-| [stage2-mapping.md](stage2-mapping.md) | I/O paths, states, fault codes, scan order and known differences |
-| [stage2-simulation.md](stage2-simulation.md) | Exact IDE assembly, 20 ms task setup, tests and expected outcomes |
-| [Stage 2 evidence](../evidence/stage2/README.md) | Honest status, actual local checks, pending CODESYS results |
+| [E_CellState.st](exports/E_CellState.st) | DUT enum; STOPPED, READY, FEED, ACCEPT, FAULT; EXTEND/RETRACT reserved |
+| [E_CellFault.st](exports/E_CellFault.st) | DUT enum; supporting guards and explicit unsupported-metal diagnostic |
+| [ST_CellInputs.st](exports/ST_CellInputs.st) | DUT structure; all ten reference input symbols and simulation defaults |
+| [ST_CellOutputs.st](exports/ST_CellOutputs.st) | DUT structure; four output commands/status bits |
+| [FB_ConveyorSorter.st](exports/FB_ConveyorSorter.st) | FB; edge detectors, two TONs, sequence and confirmed count |
+| [PLC_PRG.st](exports/PLC_PRG.st) | Manual test PROGRAM; editable simulation inputs and one controller call |
+| [ST_Stage2Sample.st](exports/ST_Stage2Sample.st) | DUT structure; per-scan input/state/output/timer/count sample |
+| [PRG_TestSequence.st](exports/PRG_TestSequence.st) | Alternative test PROGRAM; five scripted cases and bounded capture array |
+| [check_package.py](check_package.py) | Python package consistency checks; no ST compilation or execution |
 
-These `.st` files are hand-authored readable source listings in the planned `exports/` directory, not output from a CODESYS export. Follow the declaration/implementation paste instructions in the simulation procedure. The task interval is an IDE configuration step, not encoded in these listings.
+`exports/` contains readable authored source, not verified IDE-generated exports.
+The simulation guide explains how to split declarations and implementation into
+the IDE panes. Use one **20 ms cyclic task** and exactly one PROGRAM call. The
+Standard library provides TON and R_TRIG; record the resolved version when built.
 
-## Scope and behavior
+## Implemented in source
 
-- Independent R_TRIG instances run on every call; unused edges are consumed.
-- Reset in STOPPED/FAULT requires a clear path, home, healthy permissive and Start/Stop released. It preserves completed counts. In READY, Reset inhibits Start. Reset during motion is ignored, not used as Stop.
-- A passage latch is cleared on every state change. Only ACCEPT can increment the count, and counting immediately leaves ACCEPT.
-- Global input guards, operational Stop, first-fault latching and timeout recovery support this limited route. They do not complete Stage 3 verification.
-- Outputs derive from the final state. Extend is always false. Metal at station triggers `METAL_ROUTE_NOT_IMPLEMENTED`; no reject count or pusher motion is implemented.
-- No retention, physical I/O mapping, runtime connection to Python or hardware commissioning is included.
+- Startup STOPPED; eligible Reset arms READY without starting movement.
+- Start and Reset rising edges sampled every scan; no queued or repeated starts.
+- FEED → ACCEPT for non-metal; route sampled at the station.
+- Count only after accepted TRUE then FALSE and station clear. Count once, return
+  to READY, require a fresh Start for the next part.
+- Independent 5 s FEED and 3 s ACCEPT timers, started on state entry; timeout
+  evaluated before same-scan completion. Runtime semantics remain to be verified.
+- Stop, basic permissive/plausibility guards, first-fault latch and controlled
+  recovery; completed count preserved during operator Stop/Reset.
+- Explicit metal-route fault; extend output always FALSE, reject count always 0.
 
-## Next step: reproduce in IDE simulation
+READY ignores Start while Reset is asserted, a stricter rule than the current
+Python READY branch. Timer ET/Q diagnostics retain the exit scan's values until
+the next call. Both differences are explained in [the design](stage2-mapping.md).
+The ST count uses UDINT with an overflow fault; Python integers are unbounded.
 
-Follow [the procedure](stage2-simulation.md). Use one 20 ms cyclic task with **either PLC_PRG or PRG_TestSequence**, never both. Record build messages, versions, task settings, actual test outcomes and traces before claiming the gate passed. Save the native project and dependency archive only after creating them in CODESYS.
+## Still required
 
-The eventual full-port completion gate still requires the [full test matrix](../docs/test-plan.md), reject operation, fault/recovery tests and recorded R01–R12 outcomes. The source delivered here covers the first sequence only.
+Create/compile/run in CODESYS, resolve any IDE/compiler issues, record actual test
+outcomes and timing observations, and save the native project/archive plus IDE
+export. Stage 3 reject sequencing and Stage 4 full-cell verification are still
+pending. HMI, CAD and CAM retain their existing status. No hardware commissioning,
+physical safety function or real-time performance claim is made.
+
+Run local checks from the repository root:
+
+```bash
+python -m unittest discover -s tests -v
+python plc/check_package.py
+```
+
+Passing these commands does **not** pass the Stage 2 PLC gate.

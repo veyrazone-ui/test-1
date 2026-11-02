@@ -1,6 +1,6 @@
 # Control design
 
-The full contract below describes the reference/intended MVP. The accept-only PLC subset and its explicit differences (Reset inhibition in READY, unsupported metal route, TON wall-time timing) are in [Stage 2 mapping](../plc/stage2-mapping.md).
+The table below is the full-cell reference contract. The partial [Stage 2 PLC design](../plc/stage2-mapping.md) documents supported states, the metal-route stop, READY Reset/Start inhibition and timer-diagnostic differences; it does not yet implement the full contract.
 
 ## State and output contract
 
