@@ -2,7 +2,9 @@
 
 A student-scale automation project: transport one part, classify it with a simulated inductive sensor, send non-metal parts to the accept exit and divert metal parts to a reject chute. Demonstrate sequencing, feedback, fault handling and verification before connecting any hardware.
 
-**Status: tested Python reference starter; PLC, HMI and CAD implementation planned.** The included demos use scripted sensor inputs. They are not a physics simulation, a connected PLC, or evidence of a commissioned machine.
+**CAD milestone 01 planning is complete. Stage 6 remains open.** Both editable FreeCAD models, both STEP exports, the dimensioned drawing and geometry inspection are pending. The Python reference starter is tested. PLC and HMI implementation are pending.
+
+The included demos use scripted sensor inputs. They are not a physics simulation, a connected PLC, or evidence of a commissioned machine.
 
 ## Start here
 
@@ -68,7 +70,9 @@ Startup is STOPPED. Reset can establish READY only with a clear cell and the pus
 | Automated reference tests | 27 tests passed locally; includes parameterized state cases |
 | Continuous-integration workflow | Included; check the repository Actions tab for hosted run status |
 | CODESYS PLC project and PLC test results | Planned; not compiled or tested yet |
-| HMI and CAD models | Planned; briefs included |
+| HMI | Planned; brief included |
+| CAD milestone 01 requirements and FreeCAD plan | Planning complete. See the [dimensions, checks and evidence structure](cad/README.md). |
+| CAD models, STEP exports and dimensioned drawing | Stage 6 open. All five files are [pending](evidence/cad/artifact-manifest.md). The [geometry checks](evidence/cad/milestone-01.md) await those files. |
 | CAM toolpaths / physical prototype | Optional future work; not produced or tested |
 
 ## Tools
@@ -98,7 +102,8 @@ CODESYS Development System is available as a free download; runtime products and
 | `tests/` | `test_controller.py` and test discovery support |
 | `plc/README.md` | PLC project structure and porting steps |
 | `hmi/README.md` | Operator screen and simulation-panel brief |
-| `cad/README.md` | Layout, mounting-plate brief and design checks |
+| `cad/README.md` | CAD milestone requirements, dimensioned FreeCAD plan and artifact locations |
+| `evidence/cad/` | CAD verification checklist and artifact manifest; execution pending |
 | `cam/README.md` | Optional manufacturing study and verification gate |
 | `evidence/` | Baseline results, example traces and a future-results template |
 | `.github/workflows/checks.yml` | Automated Python tests on push and pull request |

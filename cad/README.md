@@ -1,35 +1,40 @@
-# Mechanical design brief
+# CAD milestone 01 — sensor mount and cell layout
 
-**Status: proposed dimensions; no CAD model, drawing or analysis result is supplied yet.** Use millimetres consistently and label assumed dimensions in the first revision.
+**Status: requirements, dimensioned modeling plan and evidence structure prepared. Native models, STEP exports and drawing remain pending.** Revision A, 2026-11-02.
 
-## Cell concept
+1. Read [sensor requirements](sensor-mount-requirements.md).
+2. Follow the [FreeCAD modeling plan](freecad-modeling-plan.md).
+3. Record actual checks in [CAD evidence](../evidence/cad/milestone-01.md).
+4. Complete the [artifact manifest](../evidence/cad/artifact-manifest.md).
 
-| Item | Starting value / design task |
+## Proposed baseline
+
+| Item | Revision A |
 | --- | --- |
-| Belt envelope | 600 mm long × 80 mm wide |
-| Part | 30 mm diameter × 10 mm high puck, centered on belt |
-| Coordinates | x along belt; y across belt; z vertical; establish a visible datum |
-| Classification station | x = 300 mm from staging datum |
-| Accept photoeye | x = 480 mm; validate beam position and mounting access |
-| Reject action | Pusher moves across belt at classification station into side chute |
-| Pusher stroke | Initial 100 mm assumption; verify actual face start position, contact and clearance |
-| Guarding envelope | Reserve space around belt and pusher; not a finished guard design |
+| Component | Overhead plate for the `metal` inductive classification sensor |
+| Plate | 80 × 40 × 5 mm; assumed 6061-T6 aluminium |
+| Frame mounting | Two through slots, 18 overall × 5.5 wide, on 50 mm pitch; assumed M5 fixings |
+| Sensor fixing | Ø13 through clearance hole for assumed Ø12 threaded-body sensor and supplier nuts; no plate thread |
+| Adjustment | Conservative 12.5 mm total along belt, ±6.25 from nominal |
+| Sensor | Ø12 × 50 placeholder, downward-facing, nominal 2 mm above a 10 mm puck |
+| Cell | 600 × 80 belt; Ø30 × 10 puck; station x=300; accept beam x=480 |
 
-Show the part and pusher at home and extended positions. A 100 mm stroke is not by itself proof of clearance: the final part position depends on the pusher face's starting location and contact point. Check that the part fully clears the belt and enters the chute. Consider residual belt motion when discussing why the simulation stops instantaneously but a real system may not.
+All dimensions are millimetres. Sensor model, support interface, sensing range and cable are explicit assumptions.
 
-## Manufacturable sensor mounting plate
+## Artifact locations
 
-Make a small plate from the same cell the CAD/CAM study component. Begin with a flat 80 × 40 × 5 mm plate; use two adjustable mounting slots and a sensor mounting feature. Pick the actual slot size, sensor hole and edge clearances after selecting a sensor envelope. Do not call a hole "M12" unless its thread or clearance intent and chosen sensor match.
+| Directory | Intended contents |
+| --- | --- |
+| `cad/models/` | `sensor-mount.FCStd`, `conveyor-layout.FCStd` |
+| `cad/exports/` | `sensor-mount.step`, `conveyor-layout.step` |
+| `cad/drawings/` | `sensor-mount-rev-A.pdf`; editable TechDraw page retained in plate model |
+| `evidence/cad/` | Checklist, manifest and actual verification results |
+| `evidence/cad/images/` | Parameter, sketch, drawing, layout, clearance and reimport screenshots |
 
-Parameterize plate length, width, thickness, mounting pitch, slot length and sensor feature location. Add sufficient edge material, tool access and cable/connector clearance. A flat part keeps the optional manufacturing exercise to 2.5D operations.
+Directories currently contain instructions only. Do not create empty CAD files as placeholders.
 
-## Deliverables and checks
+## Stage 6 gate
 
-- Editable `conveyor-layout.FCStd` and `sensor-mount.FCStd` models.
-- STEP exports that reopen correctly, plus a dimensioned drawing PDF.
-- A view showing the classification sensor, pusher and reject route together.
-- A short note on datums, adjustment range, material assumption and manufacturing method.
-- Recorded envelope/interference checks at both pusher limits and sensor visibility checks.
-- Updated travel/time calculations if sensor positions change.
+Both native models must reopen/recompute, STEP exports must reopen correctly, and the dimensioned drawing must agree with the saved model. Record sensor alignment, adjustment, pusher swept-envelope, service access and timing checks. Geometry completion under labeled assumptions does not prove hardware performance.
 
-An FEA study is optional and should start only after a meaningful load and restraint model exists. A colorful stress plot with invented loads is not a completion criterion.
+Source baseline: `b4ae9c8e9a807e83dc25c779da03d02f277d8354`; [I/O](../docs/io-map.csv), [requirements](../docs/requirements.md), [control design](../docs/control-design.md), [Stage 6](../docs/implementation-plan.md), [optional CAM](../cam/README.md).
