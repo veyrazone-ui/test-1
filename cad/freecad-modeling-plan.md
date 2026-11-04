@@ -27,7 +27,7 @@ Local origin: lower-left plate underside. X along length, Y along width, pad +Z.
 
 Slots run along X. Arc centers: left (8.75,20)/(21.25,20); right (58.75,20)/(71.25,20). Bounds X=6…24 and 56…74, Y=17.25…22.75.
 
-With nominal 5 mm bolt shanks, absolute geometric center travel is 18-5=13 mm. Specify only conservative 12.5 mm arc-center travel (±6.25); do not rely on diametral clearance for useful adjustment.
+With nominal Ø5 mm bolt shanks, the ideal center travel is 18 − 5 = 13 mm. Use the 12.5 mm between arc centers (±6.25 mm) as the nominal adjustment range. Check usable travel with both fixings, the drawing tolerances and the actual support pitch.
 
 ## Editable plate feature sequence
 
@@ -91,11 +91,13 @@ Pusher calculation: face starts Y=-45, 5 mm from belt edge. It travels 30 mm bef
 
 At full extension, puck spans Y=55…85, still blocking the Y=60 reject beam. Its center must move beyond Y=75 for trailing-edge clearance. Show that downstream pose and a chute route that permits it. Verify departure inside the 1 s RETRACT phase once dynamics are known; otherwise change chute, sensor position or timer explicitly.
 
-Check intermediate pusher positions or a swept volume, not only endpoints. Nominal sensor tip/puck clearance is 2 mm and tip/pusher-top clearance 4 mm. Runout, target variation and deflection consume these gaps. Real stopping distance and pusher X coverage require confirmation.
+Check the full pusher sweep. The proposed pusher underside and belt top are both at Z=0, giving **0 mm nominal running clearance**. Resolve the interface and record the minimum clearance over the stroke before passing C08. The face also spans the station beam at X=300, Z=5. Model the finite beam and both housings, then check that the returning pusher and the departing puck clear the beam before a reject count (C09).
+
+Nominal sensor tip/puck clearance is 2 mm and tip/pusher-top clearance is 4 mm. Runout, target variation and deflection consume these gaps. Real stopping distance and pusher X coverage require confirmation.
 
 ## Timing reconciliation
 
-Retain proposed 100 mm/s belt, 20 ms scan, FEED=5 s, ACCEPT=3 s and pusher phases=1 s.
+Use the proposed 100 mm/s belt speed and 20 ms scan. Under R07, the controller must observe completion strictly before 5 s in FEED, 3 s in ACCEPT and 1 s each in EXTEND and RETRACT. The 0.50 s return estimate covers the cylinder alone. Reject completion also requires the sampled home signal, completed reject passage and a clear station.
 
 | Check | Ideal result | Interpretation |
 | --- | --- | --- |

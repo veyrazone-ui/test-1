@@ -2,7 +2,9 @@
 
 A student-scale automation project: transport one part, classify it with a simulated inductive sensor, send non-metal parts to the accept exit and divert metal parts to a reject chute. Demonstrate sequencing, feedback, fault handling and verification before connecting any hardware.
 
-**Status: tested Python reference starter; CAD milestone requirements and modeling plan prepared; PLC, HMI and CAD implementation pending.** The included demos use scripted sensor inputs. They are not a physics simulation, a connected PLC, or evidence of a commissioned machine.
+**CAD milestone 01 planning is complete. Stage 6 remains open.** Both editable FreeCAD models, both STEP exports, the dimensioned drawing and geometry inspection are pending. The Python reference starter is tested. PLC and HMI implementation are pending.
+
+The included demos use scripted sensor inputs. They are not a physics simulation, a connected PLC, or evidence of a commissioned machine.
 
 ## Start here
 
@@ -69,8 +71,8 @@ Startup is STOPPED. Reset can establish READY only with a clear cell and the pus
 | Continuous-integration workflow | Included; check the repository Actions tab for hosted run status |
 | CODESYS PLC project and PLC test results | Planned; not compiled or tested yet |
 | HMI | Planned; brief included |
-| CAD milestone 01 requirements and FreeCAD plan | Prepared; [dimensions, checks and evidence structure](cad/README.md) |
-| CAD models, STEP exports and dimensioned drawing | Pending; Stage 6 gate remains open |
+| CAD milestone 01 requirements and FreeCAD plan | Planning complete. See the [dimensions, checks and evidence structure](cad/README.md). |
+| CAD models, STEP exports and dimensioned drawing | Stage 6 open. All five files are [pending](evidence/cad/artifact-manifest.md). The [geometry checks](evidence/cad/milestone-01.md) await those files. |
 | CAM toolpaths / physical prototype | Optional future work; not produced or tested |
 
 ## Tools

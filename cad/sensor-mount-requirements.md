@@ -4,17 +4,17 @@ Prepared 2026-11-02 from repository baseline `b4ae9c8e9a807e83dc25c779da03d02f27
 
 ## Traceability
 
-Sources: [I/O map](../docs/io-map.csv), [requirements](../docs/requirements.md), [control design](../docs/control-design.md), and the original CAD brief at the baseline commit.
+The [I/O map](../docs/io-map.csv), [requirements](../docs/requirements.md) and [control design](../docs/control-design.md) define the control behavior. The [original CAD brief](https://github.com/veyrazone-ui/test-1/blob/b4ae9c8e9a807e83dc25c779da03d02f277d8354/cad/README.md) proposes the 80 × 40 × 5 mm plate and two adjustable slots. Revision A proposes their 18 × 5.5 mm size, 50 mm pitch and the Ø13 sensor clearance hole.
 
-| ID | Documented behavior | Mechanical requirement | Verification |
+| ID | Source requirement or design basis | Mechanical requirement | Planned check |
 | --- | --- | --- | --- |
 | CAD-R01 | `metal` sampled once at first FEED `station` detection (R03) | Inductive reading established before station event; independently position photoeye and inductive sensor | First-detection pose, sensing window and response/filter/scan timing |
-| CAD-R02 | Metal selects reject; non-metal selects accept | Clear target view, controlled sensing gap, no unwanted detection of surrounding metal | Datasheet range, target material and mounting clearances |
-| CAD-R03 | `accepted` true then false before count (R04) | Unobstructed exit at x=480 | Leading/trailing-edge poses and passage calculation |
-| CAD-R04 | `rejected` true then false, plus pusher home (R05) | Chute carries puck completely past reject beam | Endpoint and downstream poses; departure within retract phase |
-| CAD-R05 | Distinct `pusher_home` and `pusher_extended`; simultaneous true is fault (R10) | Separate limit sensing zones | Home/extended layout markers; real switch selection later |
+| CAD-R02 | Metal selects reject and non-metal selects accept (R03) | Clear target view, controlled sensing gap, no unwanted detection of surrounding metal | Datasheet range, target material and mounting clearances |
+| CAD-R03 | Count after `accepted` goes true then false and `station` is clear (R04) | Keep the accept route clear through the exit at X=480 | Show both beam crossings and confirm the station beam is clear at count |
+| CAD-R04 | Counting requires prior `pusher_extended` feedback, `pusher_home` on return, completed `rejected` passage (true then false) and `station` clear (R05) | Carry the puck beyond the reject beam and clear the station beam on return | Show full extension, downstream departure and home, including the beam paths |
+| CAD-R05 | Conflicting limits or exits, a wrong-route exit, and loss of home feedback during conveyor motion are faults (R10) | Keep `pusher_home` and `pusher_extended` zones distinct, separate the two exit beams and keep the pusher home during FEED/ACCEPT | Review limit positions and which beams each route crosses. Controller tests cover the fault logic. |
 | CAD-R06 | `conveyor` in FEED/ACCEPT, `extend` in EXTEND (R06) | Mount and cable clear puck and pusher swept envelope | Limits and intermediate travel checks, with stopping allowance |
-| CAD-R07 | Ø30×10 puck; 100 mm/s belt; 20 ms scan | Common datums and geometry consistent with timing | Layout dimensions and timing record |
+| CAD-R07 | FEED, ACCEPT, EXTEND and RETRACT must complete before their deadlines. A completion on the deadline scan faults (R07). | Use common datums and the assumed Ø30 × 10 mm puck, 100 mm/s belt and 20 ms scan to estimate travel | Compare ideal travel and clearance times with each deadline in the [timing plan](freecad-modeling-plan.md#timing-reconciliation). Actual stopping and chute travel remain unmeasured. |
 | CAD-R08 | Flat 80×40×5 plate, two adjustable slots in original brief | Parametric, accessible 2.5D part | Constrained sketches, editable model, drawing and STEP checks |
 
 Operator controls, permissive, ready and alarm impose no mounting-hole pattern. The I/O map specifies no sensor catalogue number, electrical polarity, thread, sensing range, support pattern or stopping distance. This plate carries the `metal` sensor only; photoeyes and cylinder switches remain separate layout objects.

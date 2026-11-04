@@ -13,20 +13,20 @@
 
 | ID | Acceptance check | Status | Actual observations / evidence |
 | --- | --- | --- | --- |
-| C01 | I/O and R03–R07/R10 mapped to geometry | DOCUMENTED | cad/sensor-mount-requirements.md |
-| C02 | Arithmetic: 6 mm end ligament, 9.5 mm inter-feature ligament, 12.5 mm adjustment, 14411.26 mm³ plate volume | CALCULATED ONLY | cad/freecad-modeling-plan.md; no CAD measurements yet |
+| C01 | I/O and R03–R07/R10 mapped to geometry | DOCUMENTED | [Requirements traceability table](../../cad/sensor-mount-requirements.md#traceability) |
+| C02 | Arithmetic: 6 mm end ligament, 9.5 mm inter-feature ligament, 12.5 mm adjustment, 14411.26 mm³ plate volume | CALCULATED ONLY | [Hand calculations](../../cad/freecad-modeling-plan.md#hand-checks). CAD measurements are pending. |
 | C03 | Native plate opens/recomputes, one solid, sketches fully constrained | NOT RUN | Record solver and geometry results |
 | C04 | Native model agrees with dimensions and calculated volume | NOT RUN | Actual dimensions/volume |
 | C05 | Thickness 6, slots 20, pitch 48 variants each valid; nominal restored | NOT RUN | Each variant's constraints, geometry and clearances |
 | C06 | Both adjustment extremes, washer/nut/service access checked | NOT RUN | Actual distances and wrench-access observations |
 | C07 | Selected sensor supports gap, target and first-station sampling | BLOCKED: SENSOR UNSELECTED | Datasheet and sensing-window calculation |
-| C08 | Puck/pusher/support/sensor/cable clear at limits and through stroke | NOT RUN | Swept-volume/intermediate checks; distinguish intentional mating contacts |
-| C09 | Puck clears belt; chute provides complete reject beam passage | NOT RUN | Extended/downstream poses; remaining dynamics limitations |
+| C08 | Clearance at both limits and throughout the stroke for the puck, pusher, belt, supports, sensor and cable | NOT RUN | Proposed underside and belt top coincide at Z=0. Resolve and measure running clearance in CAD. Record intentional contacts separately. |
+| C09 | Puck clears the belt and reject beam, and the station beam clears before the home-confirmed count | NOT RUN | Record extended, downstream and returned poses. Check beam crossings by both puck and pusher. |
 | C10 | Native layout relative links work from a different checkout folder | NOT RUN | Fresh-path reopen result |
 | C11 | Plate STEP: one solid, correct bounds/features, volume difference ≤0.01% | NOT RUN | Native and imported measurements |
 | C12 | Layout STEP object list/count and placements agree | NOT RUN | Declared contents and reimport result |
 | C13 | PDF dimensions/notes/datums legible and agree with model | NOT RUN | Actual PDF review |
-| C14 | Geometry/timing reconciled, remaining dynamics stated | CALCULATED ONLY | 2.85 s center-datum feed; 2.1 s accept; 0.5 s stroke |
+| C14 | Ideal travel compared with the R07 deadlines | CALCULATED ONLY | 2.85 s center-datum feed, 2.1 s accept, 0.5 s per pusher stroke. Chute departure and the scan that confirms completion remain unverified. |
 | C15 | Manifest, hashes, revision and README status agree | NOT RUN | Complete artifact-manifest.md |
 
 C07 may remain explicitly unresolved for a conceptual CAD release only if all geometric checks pass and the release clearly says sensor selection/sensing performance unverified. It blocks claims of hardware fit and guaranteed classification. C09 requires a modeled downstream route; unmeasured chute dynamics must remain a stated limitation, not a passed physical timing test.
