@@ -1,0 +1,99 @@
+Stage 2 prepared-source repository verification — 2026-11-07T20:23:54.143071+05:30
+Reviewed PR head: 160f06428e8ae989b869a61a92e147d5fcd325c3
+Merged main baseline: b2a7115347d852f349fb3f84c078e52fce3e5787
+Interpreter: 3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]
+Scope: Python reference, evidence-validator mutations and source consistency ONLY.
+CODESYS compilation, IDE execution and measured PLC traces: NOT RUN.
+Source-inventory SHA-256: 079694f259c2373177b18c9b75522445a61f7a722580a7f129df19c92067ff27
+
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python -m unittest discover -s tests -v
+test_accept_demo_counts_one (test_controller.ControllerTests.test_accept_demo_counts_one) ... ok
+test_all_active_states_have_timeouts (test_controller.ControllerTests.test_all_active_states_have_timeouts) ... ok
+test_all_demo_traces_obey_output_interlock (test_controller.ControllerTests.test_all_demo_traces_obey_output_interlock) ... ok
+test_bad_permissive_blocks_reset (test_controller.ControllerTests.test_bad_permissive_blocks_reset) ... ok
+test_boot_and_start_without_reset_do_not_move (test_controller.ControllerTests.test_boot_and_start_without_reset_do_not_move) ... ok
+test_classification_is_latched_at_station (test_controller.ControllerTests.test_classification_is_latched_at_station) ... ok
+test_conflicting_limits_or_exits_fault (test_controller.ControllerTests.test_conflicting_limits_or_exits_fault) ... ok
+test_fault_reset_requires_clear_cell_and_new_edge (test_controller.ControllerTests.test_fault_reset_requires_clear_cell_and_new_edge) ... ok
+test_first_fault_survives_stop_and_secondary_fault (test_controller.ControllerTests.test_first_fault_survives_stop_and_secondary_fault) ... ok
+test_held_start_does_not_repeat_cycle (test_controller.ControllerTests.test_held_start_does_not_repeat_cycle) ... ok
+test_home_feedback_loss_stops_conveyor (test_controller.ControllerTests.test_home_feedback_loss_stops_conveyor) ... ok
+test_interlock_in_each_active_state_latches (test_controller.ControllerTests.test_interlock_in_each_active_state_latches) ... ok
+test_reject_demo_counts_one (test_controller.ControllerTests.test_reject_demo_counts_one) ... ok
+test_reject_needs_exit_passage_and_home_feedback (test_controller.ControllerTests.test_reject_needs_exit_passage_and_home_feedback) ... ok
+test_repeated_cycles_count_exactly_once_each (test_controller.ControllerTests.test_repeated_cycles_count_exactly_once_each) ... ok
+test_reset_alone_never_starts_motion (test_controller.ControllerTests.test_reset_alone_never_starts_motion) ... ok
+test_reset_preserves_completed_counts (test_controller.ControllerTests.test_reset_preserves_completed_counts) ... ok
+test_sensor_high_does_not_count_until_passage_finishes (test_controller.ControllerTests.test_sensor_high_does_not_count_until_passage_finishes) ... ok
+test_simultaneous_start_and_reset_cannot_restart (test_controller.ControllerTests.test_simultaneous_start_and_reset_cannot_restart) ... ok
+test_start_with_occupied_cell_faults (test_controller.ControllerTests.test_start_with_occupied_cell_faults) ... ok
+test_station_must_clear_before_count (test_controller.ControllerTests.test_station_must_clear_before_count) ... ok
+test_station_on_timeout_boundary_is_too_late (test_controller.ControllerTests.test_station_on_timeout_boundary_is_too_late) ... ok
+test_station_one_scan_before_timeout_is_accepted (test_controller.ControllerTests.test_station_one_scan_before_timeout_is_accepted) ... ok
+test_stop_in_each_active_state_requires_reset (test_controller.ControllerTests.test_stop_in_each_active_state_requires_reset) ... ok
+test_stop_overrides_start (test_controller.ControllerTests.test_stop_overrides_start) ... ok
+test_timer_configuration_rejects_invalid_values (test_controller.ControllerTests.test_timer_configuration_rejects_invalid_values) ... ok
+test_wrong_exit_faults_without_counting (test_controller.ControllerTests.test_wrong_exit_faults_without_counting) ... ok
+test_blob_sha_is_not_a_commit (test_plc_package.EvidenceValidatorTests.test_blob_sha_is_not_a_commit) ... ok
+test_calendar_dates_are_validated (test_plc_package.EvidenceValidatorTests.test_calendar_dates_are_validated) ... ok
+test_guide_and_register_expected_text_must_agree (test_plc_package.EvidenceValidatorTests.test_guide_and_register_expected_text_must_agree) ... ok
+test_malformed_and_unknown_commits_rejected (test_plc_package.EvidenceValidatorTests.test_malformed_and_unknown_commits_rejected) ... ok
+test_missing_empty_directory_and_untracked_evidence_rejected (test_plc_package.EvidenceValidatorTests.test_missing_empty_directory_and_untracked_evidence_rejected) ... ok
+test_observed_records_accept_tracked_file_and_real_ancestor_commit (test_plc_package.EvidenceValidatorTests.test_observed_records_accept_tracked_file_and_real_ancestor_commit) ... ok
+test_observed_records_require_every_provenance_field (test_plc_package.EvidenceValidatorTests.test_observed_records_require_every_provenance_field) ... ok
+test_package_indexes_are_not_runtime_evidence (test_plc_package.EvidenceValidatorTests.test_package_indexes_are_not_runtime_evidence) ... ok
+test_pass_cannot_be_carried_forward_after_source_change (test_plc_package.EvidenceValidatorTests.test_pass_cannot_be_carried_forward_after_source_change) ... ok
+test_paths_cannot_escape_or_use_ambiguous_separators (test_plc_package.EvidenceValidatorTests.test_paths_cannot_escape_or_use_ambiguous_separators) ... ok
+test_pending_record_needs_no_git_or_evidence (test_plc_package.EvidenceValidatorTests.test_pending_record_needs_no_git_or_evidence) ... ok
+test_symlink_file_and_directory_rejected (test_plc_package.EvidenceValidatorTests.test_symlink_file_and_directory_rejected) ... ok
+test_unknown_status_rejected (test_plc_package.EvidenceValidatorTests.test_unknown_status_rejected) ... ok
+test_unrelated_commit_is_not_source_provenance (test_plc_package.EvidenceValidatorTests.test_unrelated_commit_is_not_source_provenance) ... ok
+
+----------------------------------------------------------------------
+Ran 41 tests in 0.326s
+
+OK
+
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python plc/check_package.py
+PASS: all 14 I/O symbols, watch paths, types and source defaults agree
+PASS: eight source objects have consistent names, boundaries and pane markers
+PASS: no retained variables or physical I/O addresses in supplied ST
+PASS: SHA-256 inventory matches all eight ST source files
+PASS: 25 procedure cases match the register actions/expectations and evidence rules
+PASS: repository-local Markdown links resolve
+LIMIT: no CODESYS compiler/runtime was invoked; PLC validation remains pending
+
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python -m simulation.run_demo --scenario accept
+scenario=accept state=READY accepted=1 rejected=0 fault=NONE scans=40
+
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python -m simulation.run_demo --scenario reject
+scenario=reject state=READY accepted=0 rejected=1 fault=NONE scans=36
+
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python -m simulation.run_demo --scenario feed-jam
+scenario=feed-jam state=FAULT accepted=0 rejected=0 fault=FEED_TIMEOUT scans=273
+
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python -m simulation.run_demo --scenario interlock
+scenario=interlock state=FAULT accepted=0 rejected=0 fault=INTERLOCK_OPEN scans=27
+
+$ git diff --check HEAD
+
+PASS: no whitespace errors or unmerged paths; CAD/evidence files exactly match current main.
+PASS: all seven state codes and twelve fault codes match their documented mappings.
+PASS: all 25 PLC rows are NOT RUN; actual and provenance fields are empty.
+
+$ git clone --config core.autocrlf=true --no-local --branch validation-stage2-checkout /workspace/scratch/e0007eff6d1e/test-1 /tmp/stage2-autocrlf-ar96fm9h/checkout
+Cloning into '/tmp/stage2-autocrlf-ar96fm9h/checkout'...
+
+$ /opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python plc/check_package.py
+PASS: all 14 I/O symbols, watch paths, types and source defaults agree
+PASS: eight source objects have consistent names, boundaries and pane markers
+PASS: no retained variables or physical I/O addresses in supplied ST
+PASS: SHA-256 inventory matches all eight ST source files
+PASS: 25 procedure cases match the register actions/expectations and evidence rules
+PASS: repository-local Markdown links resolve
+LIMIT: no CODESYS compiler/runtime was invoked; PLC validation remains pending
+PASS: independent autocrlf=true checkout has eight LF ST files, matching hashes and a clean worktree.
+This is a Git line-ending simulation on this host, not a native Windows/CODESYS run.
+
+Result: 41 Python tests passed (27 controller + 14 validator); four demos passed; package and fresh-checkout checks passed.
+Stage 2 remains OPEN. No PLC runtime case or hardware commissioning is claimed.

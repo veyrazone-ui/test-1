@@ -3,7 +3,7 @@
 ## Levels of evidence
 
 1. **Python reference tests:** implemented and runnable now. They check the documented control contract using ideal Boolean inputs.
-2. **PLC-in-IDE tests:** planned. Repeat the cases on the compiled ST implementation; Python results do not count as PLC results.
+2. **PLC-in-IDE tests:** [Stage 2 procedure and runner supplied](../plc/stage2-simulation.md); execution is NOT RUN. Repeat cases on the compiled ST implementation; Python results do not count as PLC results. The full-cell matrix below still includes Stage 3/4 work.
 3. **CAD/CAM checks:** planned. Inspect geometry and any optional toolpaths independently of control software.
 4. **Hardware tests:** out of scope. No physical response time, safety or reliability claim is made.
 

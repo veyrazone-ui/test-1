@@ -1,5 +1,7 @@
 # Control design
 
+The table below is the full-cell reference contract. The partial [Stage 2 PLC design](../plc/stage2-mapping.md) documents supported states, the metal-route stop, READY Reset/Start inhibition and timer-diagnostic differences; it does not yet implement the full contract.
+
 ## State and output contract
 
 Outputs are derived from the resulting state at the end of each scan. Count changes occur only on successful cycle completion.

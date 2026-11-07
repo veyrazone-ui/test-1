@@ -1,39 +1,72 @@
-# PLC implementation brief
+# Stage 2 PLC source package
 
-**Status: planned. No compiled PLC project or tested Structured Text implementation is included yet.** The Python controller is a behavioral reference, not a PLC program and not connected to CODESYS.
+**Status: authored Structured Text and simulation procedure supplied. CODESYS
+compilation and execution NOT VERIFIED; Stage 2 gate OPEN.** There is no native
+`.project`, `.projectarchive`, compiled PLC application or measured PLC trace yet.
+The 27 reference tests exercise Python, not this ST implementation.
 
-## Suggested CODESYS project structure
+## Start here
 
-| Object / future export | Purpose |
+1. Read [design and state/fault mapping](stage2-mapping.md) and the
+   [symbol-to-watch-path I/O map](stage2-io-map.csv).
+2. Follow [CODESYS project setup, manual tests and scripted replay](stage2-simulation.md).
+3. Record actual results in [the Stage 2 evidence register](../evidence/stage2/README.md)
+   and [results.csv](../evidence/stage2/stage2-results.csv). All PLC cases initially say NOT RUN.
+
+## Supplied files
+
+| File | CODESYS object / purpose |
 | --- | --- |
-| `ConveyorSorting.project` | Editable native project; save only after creating and checking it |
-| `ConveyorSorting.projectarchive` | Archive with required project dependencies for reproduction |
-| `exports/E_CellState.st` | State enumeration matching the reference contract |
-| `exports/ST_CellInputs.st` | Symbolic Boolean inputs from the I/O map |
-| `exports/ST_CellOutputs.st` | Conveyor, extend, ready and alarm outputs |
-| `exports/FB_ConveyorSorter.st` | Sequence, fault latch, counters and timers |
-| `exports/PLC_PRG.st` | Calls the controller once per cyclic task |
-| `exports/PRG_TestSequence.st` | Deterministic input sequence for scan/timer tests in simulation only |
+| [E_CellState.st](exports/E_CellState.st) | DUT enum; STOPPED, READY, FEED, ACCEPT, FAULT; EXTEND/RETRACT reserved |
+| [E_CellFault.st](exports/E_CellFault.st) | DUT enum; supporting guards and explicit unsupported-metal diagnostic |
+| [ST_CellInputs.st](exports/ST_CellInputs.st) | DUT structure; all ten reference input symbols and simulation defaults |
+| [ST_CellOutputs.st](exports/ST_CellOutputs.st) | DUT structure; four output commands/status bits |
+| [FB_ConveyorSorter.st](exports/FB_ConveyorSorter.st) | FB; edge detectors, two TONs, sequence and confirmed count |
+| [PLC_PRG.st](exports/PLC_PRG.st) | Manual test PROGRAM; editable simulation inputs and one controller call |
+| [ST_Stage2Sample.st](exports/ST_Stage2Sample.st) | DUT structure; scan-entry state plus post-call input/state/output/timer/count sample |
+| [PRG_TestSequence.st](exports/PRG_TestSequence.st) | Alternative test PROGRAM; seven scripted modes (including two defensive state-injection cases) and bounded capture array |
+| [check_package.py](check_package.py) | Python package consistency checks; no ST compilation or execution |
 
-These are proposed deliverables, not files already present. Keep the native project and a readable text or PLCopen XML export together after each verified milestone. Record the IDE and library versions.
+`exports/` contains readable authored source, not verified IDE-generated exports.
+The simulation guide explains how to split declarations and implementation into
+the IDE panes. Use one **20 ms cyclic task** and exactly one PROGRAM call. The
+Standard library provides TON and R_TRIG; record the resolved version when built.
 
-## Build in this order
+## Implemented in source
 
-1. Create a Standard Project in ST. Use one 20 ms cyclic task and no physical output mapping.
-2. Add state and I/O types; initialize state to STOPPED, outputs false and counters zero. Make retention a deliberate later decision; the reference counters reset on a new process.
-3. Add independent `R_TRIG` instances for Start and Reset. Call them every scan so a held button cannot become a new edge merely because the state changes.
-4. Implement STOPPED/READY startup and FEED/ACCEPT. Initialize movement outputs false each scan, then derive them from the resulting state.
-5. Add separate phase timers. Call every timer every scan with its state condition; inactive timers must reset. Use `TON` and explicitly verify elapsed-time behavior at state entry and at the deadline.
-6. Add EXTEND/RETRACT and remember reject passage across both phases. Count only when full passage and return home are complete.
-7. Apply the fault and stop priorities in [control design](../docs/control-design.md). Do not let a general Stop branch erase a latched fault.
-8. Replay the [test matrix](../docs/test-plan.md), then add the operator display.
+- Startup STOPPED; eligible Reset arms READY without starting movement.
+- Start and Reset rising edges sampled every scan; no queued or repeated starts.
+- FEED → ACCEPT for non-metal; route sampled at the station.
+- Count only after accepted TRUE then FALSE and station clear. Count once, return
+  to READY, require a fresh Start for the next part.
+- Independent 5 s FEED and 3 s ACCEPT timers, started on state entry; timeout
+  evaluated before same-scan completion. Runtime semantics remain to be verified.
+- Stop, basic permissive/plausibility guards, first-fault latch and controlled
+  recovery only when the scan began in FAULT; completed count preserved during operator Stop/Reset.
+- Explicit metal-route fault; extend output always FALSE, reject count always 0.
 
-Keep the test-sequence program behind an unmistakable simulation-only selection. Do not implement a connection to Python as part of the first port. Manually or deterministically replay the same input sequences in each environment and compare results.
+READY ignores Start while Reset is asserted, a stricter rule than the current
+Python READY branch. Timer ET/Q diagnostics retain the exit scan's values until
+the next call. Both differences are explained in [the design](stage2-mapping.md).
+The ST count uses UDINT with an overflow fault; Python integers are unbounded.
 
-## First PLC exercise
+## Still required
 
-Implement only STOPPED → READY → FEED → ACCEPT → READY. Force the station and accept photoeye in the documented order. Demonstrate that holding the accept sensor high produces no count and eventually times out. Then release it before timeout and confirm exactly one count. Explain which rung/ST condition prevents counting twice.
+Create/compile/run in CODESYS, resolve any IDE/compiler issues, record actual test
+outcomes and timing observations, and save the native project/archive plus IDE
+export. Stage 3 reject sequencing and Stage 4 full-cell verification are still
+pending. HMI, CAD and CAM retain their existing status. No hardware commissioning,
+physical safety function or real-time performance claim is made.
 
-## Port completion gate
+Run local checks from the repository root:
 
-Record zero compilation errors, the task configuration, actual results for R01–R12, a normal cycle and an interrupted-cycle recovery. The portable reference model passing does not satisfy this gate on its own.
+```bash
+python -m unittest discover -s tests -v
+python plc/check_package.py
+```
+
+The runner reports `sequence_passed`, which checks only its assertions. Measured
+deadline verdicts require timestamped captures; S2-20 also requires continuous
+recovery traces after both timeout types. See the procedure for exact coverage.
+
+Passing these commands does **not** pass the Stage 2 PLC gate.

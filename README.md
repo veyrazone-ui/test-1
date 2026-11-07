@@ -2,7 +2,9 @@
 
 A student-scale automation project: transport one part, classify it with a simulated inductive sensor, send non-metal parts to the accept exit and divert metal parts to a reject chute. Demonstrate sequencing, feedback, fault handling and verification before connecting any hardware.
 
-**CAD milestone 01 planning is complete. Stage 6 remains open.** Both editable FreeCAD models, both STEP exports, the dimensioned drawing and geometry inspection are pending. The Python reference starter is tested. PLC and HMI implementation are pending.
+**Status: tested Python reference controller; Stage 2 PLC source and simulation procedure prepared. CODESYS compilation/execution remain unverified and Stage 2 is OPEN.**
+
+**CAD milestone 01 planning is complete. Stage 6 remains OPEN.** Both editable FreeCAD models, both STEP exports, the dimensioned drawing and geometry inspection are pending. HMI implementation is planned.
 
 The included demos use scripted sensor inputs. They are not a physics simulation, a connected PLC, or evidence of a commissioned machine.
 
@@ -30,6 +32,20 @@ Expected final results:
 | `interlock` | FAULT | 0 | 0 | INTERLOCK_OPEN |
 
 Fault demos intentionally finish in FAULT and exit normally. Use the test suite for pass/fail checks. See the [recorded baseline results](evidence/validation.md).
+
+## Stage 2 PLC package
+
+Start with [plc/README.md](plc/README.md), then follow the [CODESYS setup and 25-case simulation procedure](plc/stage2-simulation.md). The package includes five DUTs, the controller FB, a manual program and a scan-driven test runner. No native `.project` or `.projectarchive` has been generated; no CODESYS compile or runtime pass is claimed.
+
+The PLC implements only the non-metal route. A metal part stops with `METAL_ROUTE_NOT_IMPLEMENTED`; EXTEND/RETRACT remain reserved for Stage 3. [Design notes](plc/stage2-mapping.md) explain timer call ordering, confirmed counting and the stricter simultaneous Reset/Start inhibit in READY. Python tests validate Python; the [PLC results register](evidence/stage2/stage2-results.csv) remains **NOT RUN** until actual IDE observations are saved.
+
+```bash
+python plc/check_package.py
+```
+
+This checks package consistency only; it is not an ST compiler or PLC simulator.
+See the [PR #2 review and corrections](docs/stage2-pr2-review.md) for severity,
+coverage and the remaining compiler/runtime gate.
 
 ## Engineering problem and scope
 
@@ -68,11 +84,13 @@ Startup is STOPPED. Reset can establish READY only with a clear cell and the pus
 | Python reference controller | Implemented |
 | Four deterministic demos and CSV trace export | Implemented |
 | Automated reference tests | 27 tests passed locally; includes parameterized state cases |
+| Evidence-validator regression tests | 14 mutation tests passed locally; these do not execute ST |
 | Continuous-integration workflow | Included; check the repository Actions tab for hosted run status |
-| CODESYS PLC project and PLC test results | Planned; not compiled or tested yet |
+| Stage 2 Structured Text, I/O/state mapping and simulation tests | [Source package prepared](plc/README.md); STOPPED/READY/FEED/ACCEPT and supporting guards |
+| Native CODESYS project/archive, compile and PLC execution results | Not yet produced/verified; [Stage 2 gate remains OPEN](evidence/stage2/README.md) |
 | HMI | Planned; brief included |
 | CAD milestone 01 requirements and FreeCAD plan | Planning complete. See the [dimensions, checks and evidence structure](cad/README.md). |
-| CAD models, STEP exports and dimensioned drawing | Stage 6 open. All five files are [pending](evidence/cad/artifact-manifest.md). The [geometry checks](evidence/cad/milestone-01.md) await those files. |
+| CAD models, STEP exports and dimensioned drawing | Stage 6 OPEN. All five files are [pending](evidence/cad/artifact-manifest.md). The [geometry checks](evidence/cad/milestone-01.md) await those files. |
 | CAM toolpaths / physical prototype | Optional future work; not produced or tested |
 
 ## Tools
@@ -99,13 +117,13 @@ CODESYS Development System is available as a free download; runtime products and
 | `docs/test-plan.md` | Requirement-to-test mapping and PLC replay procedure |
 | `docs/tools-and-sources.md` | Setup guidance and official references |
 | `simulation/` | `controller.py`, `scenarios.py`, `run_demo.py` |
-| `tests/` | `test_controller.py` and test discovery support |
-| `plc/README.md` | PLC project structure and porting steps |
+| `tests/` | Python reference tests, evidence-validator regression tests and test discovery support |
+| `plc/` | Stage 2 ST sources, mappings, scan-level replay runner and IDE test procedure |
 | `hmi/README.md` | Operator screen and simulation-panel brief |
 | `cad/README.md` | CAD milestone requirements, dimensioned FreeCAD plan and artifact locations |
 | `evidence/cad/` | CAD verification checklist and artifact manifest; execution pending |
 | `cam/README.md` | Optional manufacturing study and verification gate |
-| `evidence/` | Baseline results, example traces and a future-results template |
+| `evidence/` | Python baseline; Stage 2 local checks and explicitly unrun PLC results register |
 | `.github/workflows/checks.yml` | Automated Python tests on push and pull request |
 
 ## Implementation route
@@ -115,7 +133,7 @@ Suggested pace: **eight weeks at roughly 4–6 hours per week**, adjustable arou
 | Stage | Main deliverable | Completion gate |
 | --- | --- | --- |
 | 1 | Understand the reference model and requirements | Explain both routes; change a timer and predict the test result |
-| 2 | PLC feed/accept sequence | Compile; show clear startup, Start edge and confirmed accept count |
+| 2 | [PLC feed/accept source package](plc/README.md) supplied | OPEN: compile and run in CODESYS; retain native project and actual startup/edge/count/timer evidence |
 | 3 | PLC reject path and fault recovery | Demonstrate missing feedback, timeout and deliberate restart |
 | 4 | PLC verification | Replay the test matrix; retain actual results and traces |
 | 5 | Operator display | Show state, sensor status, counters and useful fault/recovery text |
