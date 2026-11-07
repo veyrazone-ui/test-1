@@ -23,8 +23,8 @@ The 27 reference tests exercise Python, not this ST implementation.
 | [ST_CellOutputs.st](exports/ST_CellOutputs.st) | DUT structure; four output commands/status bits |
 | [FB_ConveyorSorter.st](exports/FB_ConveyorSorter.st) | FB; edge detectors, two TONs, sequence and confirmed count |
 | [PLC_PRG.st](exports/PLC_PRG.st) | Manual test PROGRAM; editable simulation inputs and one controller call |
-| [ST_Stage2Sample.st](exports/ST_Stage2Sample.st) | DUT structure; per-scan input/state/output/timer/count sample |
-| [PRG_TestSequence.st](exports/PRG_TestSequence.st) | Alternative test PROGRAM; five scripted cases and bounded capture array |
+| [ST_Stage2Sample.st](exports/ST_Stage2Sample.st) | DUT structure; scan-entry state plus post-call input/state/output/timer/count sample |
+| [PRG_TestSequence.st](exports/PRG_TestSequence.st) | Alternative test PROGRAM; seven scripted modes (including two defensive state-injection cases) and bounded capture array |
 | [check_package.py](check_package.py) | Python package consistency checks; no ST compilation or execution |
 
 `exports/` contains readable authored source, not verified IDE-generated exports.
@@ -42,7 +42,7 @@ Standard library provides TON and R_TRIG; record the resolved version when built
 - Independent 5 s FEED and 3 s ACCEPT timers, started on state entry; timeout
   evaluated before same-scan completion. Runtime semantics remain to be verified.
 - Stop, basic permissive/plausibility guards, first-fault latch and controlled
-  recovery; completed count preserved during operator Stop/Reset.
+  recovery only when the scan began in FAULT; completed count preserved during operator Stop/Reset.
 - Explicit metal-route fault; extend output always FALSE, reject count always 0.
 
 READY ignores Start while Reset is asserted, a stricter rule than the current
@@ -64,5 +64,9 @@ Run local checks from the repository root:
 python -m unittest discover -s tests -v
 python plc/check_package.py
 ```
+
+The runner reports `sequence_passed`, which checks only its assertions. Measured
+deadline verdicts require timestamped captures; S2-20 also requires continuous
+recovery traces after both timeout types. See the procedure for exact coverage.
 
 Passing these commands does **not** pass the Stage 2 PLC gate.

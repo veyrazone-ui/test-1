@@ -2,7 +2,11 @@
 
 A student-scale automation project: transport one part, classify it with a simulated inductive sensor, send non-metal parts to the accept exit and divert metal parts to a reject chute. Demonstrate sequencing, feedback, fault handling and verification before connecting any hardware.
 
-**Status: tested Python reference controller; Stage 2 PLC source and simulation procedure supplied, CODESYS compilation/execution unverified. HMI and CAD remain planned.** The included demos use scripted sensor inputs. They are not a physics simulation, a connected PLC, or evidence of a commissioned machine.
+**Status: tested Python reference controller; Stage 2 PLC source and simulation procedure prepared. CODESYS compilation/execution remain unverified and Stage 2 is OPEN.**
+
+**CAD milestone 01 planning is complete. Stage 6 remains OPEN.** Both editable FreeCAD models, both STEP exports, the dimensioned drawing and geometry inspection are pending. HMI implementation is planned.
+
+The included demos use scripted sensor inputs. They are not a physics simulation, a connected PLC, or evidence of a commissioned machine.
 
 ## Start here
 
@@ -40,6 +44,8 @@ python plc/check_package.py
 ```
 
 This checks package consistency only; it is not an ST compiler or PLC simulator.
+See the [PR #2 review and corrections](docs/stage2-pr2-review.md) for severity,
+coverage and the remaining compiler/runtime gate.
 
 ## Engineering problem and scope
 
@@ -78,10 +84,13 @@ Startup is STOPPED. Reset can establish READY only with a clear cell and the pus
 | Python reference controller | Implemented |
 | Four deterministic demos and CSV trace export | Implemented |
 | Automated reference tests | 27 tests passed locally; includes parameterized state cases |
+| Evidence-validator regression tests | 14 mutation tests passed locally; these do not execute ST |
 | Continuous-integration workflow | Included; check the repository Actions tab for hosted run status |
-| Stage 2 Structured Text, I/O/state mapping and simulation tests | [Source package supplied](plc/README.md); STOPPED/READY/FEED/ACCEPT and supporting guards |
+| Stage 2 Structured Text, I/O/state mapping and simulation tests | [Source package prepared](plc/README.md); STOPPED/READY/FEED/ACCEPT and supporting guards |
 | Native CODESYS project/archive, compile and PLC execution results | Not yet produced/verified; [Stage 2 gate remains OPEN](evidence/stage2/README.md) |
-| HMI and CAD models | Planned; briefs included |
+| HMI | Planned; brief included |
+| CAD milestone 01 requirements and FreeCAD plan | Planning complete. See the [dimensions, checks and evidence structure](cad/README.md). |
+| CAD models, STEP exports and dimensioned drawing | Stage 6 OPEN. All five files are [pending](evidence/cad/artifact-manifest.md). The [geometry checks](evidence/cad/milestone-01.md) await those files. |
 | CAM toolpaths / physical prototype | Optional future work; not produced or tested |
 
 ## Tools
@@ -108,10 +117,11 @@ CODESYS Development System is available as a free download; runtime products and
 | `docs/test-plan.md` | Requirement-to-test mapping and PLC replay procedure |
 | `docs/tools-and-sources.md` | Setup guidance and official references |
 | `simulation/` | `controller.py`, `scenarios.py`, `run_demo.py` |
-| `tests/` | `test_controller.py` and test discovery support |
+| `tests/` | Python reference tests, evidence-validator regression tests and test discovery support |
 | `plc/` | Stage 2 ST sources, mappings, scan-level replay runner and IDE test procedure |
 | `hmi/README.md` | Operator screen and simulation-panel brief |
-| `cad/README.md` | Layout, mounting-plate brief and design checks |
+| `cad/README.md` | CAD milestone requirements, dimensioned FreeCAD plan and artifact locations |
+| `evidence/cad/` | CAD verification checklist and artifact manifest; execution pending |
 | `cam/README.md` | Optional manufacturing study and verification gate |
 | `evidence/` | Python baseline; Stage 2 local checks and explicitly unrun PLC results register |
 | `.github/workflows/checks.yml` | Automated Python tests on push and pull request |

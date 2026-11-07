@@ -57,7 +57,9 @@ IF state <> E_CellState.FAULT THEN
 END_IF;
 
 IF state = E_CellState.FAULT THEN
-    IF reset_edge AND NOT i.start AND NOT i.stop
+    (* A new fault must remain observable for its detection scan.
+       A Reset edge consumed on that scan cannot also recover it. *)
+    IF (scanState = E_CellState.FAULT) AND reset_edge AND NOT i.start AND NOT i.stop
         AND i.permissive_ok AND clearPath THEN
         fault := E_CellFault.NONE;
         state := E_CellState.READY;

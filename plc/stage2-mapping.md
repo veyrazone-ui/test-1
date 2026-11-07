@@ -45,7 +45,7 @@ stable watch/HMI display; they are not Python ordinal values.
 | ACCEPT | 3 | 1 | 0 | Seen accepted=TRUE, then accepted=FALSE and station=FALSE → count +1 and READY |
 | EXTEND | 4 | — | — | Reserved; entering it trips INVALID_STATE |
 | RETRACT | 5 | — | — | Reserved; entering it trips INVALID_STATE |
-| FAULT | 6 | 0 | 0 | Eligible new Reset edge → READY; first fault stays latched otherwise |
+| FAULT | 6 | 0 | 0 | Scan began in FAULT and eligible new Reset edge → READY; first fault stays latched otherwise |
 
 `ready` means READY **and** clear path. `alarm` means FAULT. `extend` is always
 FALSE, `rejected_count` always zero. A clear path means station, both exits and
@@ -53,6 +53,11 @@ extended feedback FALSE, with home TRUE. Reset eligibility also requires healthy
 permissive and Start/Stop released. A denied Reset edge is consumed: clearing the
 obstruction while holding Reset does not retry it. A Start edge outside READY is
 consumed. No queued starts and no automatic repeat are implemented.
+
+A fault detected on the current scan cannot be reset on that same scan, even if
+a Reset edge coincides with an invalid/reserved state. The edge is consumed;
+recovery needs a later release/repress while the scan begins in FAULT. Runner
+modes 5/6 prepare a defensive check for EXTEND/RETRACT respectively.
 
 Reset while moving is ignored; use Stop to interrupt. In READY, asserted Reset
 inhibits a concurrent Start edge. This is a deliberate stricter policy than the
@@ -64,7 +69,8 @@ intent takes priority here; do not claim full behavioral equivalence to Python.
 
 1. Save state at scan entry. Call both edge detectors unconditionally.
 2. Check permissive, conflicting limits/exits and invalid state, preserving any
-   already latched fault. Handle eligible fault reset, otherwise Stop, otherwise
+   already latched fault. Only a scan that **began in FAULT** can handle an
+   eligible fault reset; a newly detected fault stays visible. Otherwise handle Stop or
    STOPPED recovery or READY start. A recovery branch cannot also process Start.
 3. Call FEED TON with the current FEED condition, including the entry scan.
    Only if the scan **began** in FEED, evaluate timeout first, then home/exit

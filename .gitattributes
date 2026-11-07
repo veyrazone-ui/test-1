@@ -2,6 +2,7 @@
 *.py text eol=lf
 *.md text eol=lf
 *.csv text eol=lf
+*.st text eol=lf
 *.yml text eol=lf
 *.project binary
 *.projectarchive binary

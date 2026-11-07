@@ -1,6 +1,7 @@
 TYPE ST_Stage2Sample :
 STRUCT
     scan : UINT;
+    entry_state : E_CellState;
     inputs : ST_CellInputs;
     state : E_CellState;
     fault : E_CellFault;
